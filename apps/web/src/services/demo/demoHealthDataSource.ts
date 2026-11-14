@@ -6,9 +6,16 @@ import type {
   HealthSnapshot,
   HealthUpdate,
   ScenarioId,
+  DemoHistoryDays,
+  DemoState,
+  HealthEvent,
+  DailyPlanRecord,
+  WellbeingCheckIn,
 } from "@ahm/contracts";
 
 import { SCENARIOS, buildSnapshot } from "./scenarios";
+import { applyLiveSamples, configureDemoSnapshot, type LiveSample } from "./demoDataset";
+import { DailyPlanStore, applyPlanReadings, browserPlanStorage, validCheckIn, type PlanStorage } from "./dailyPlan";
 
 /** Scenario time advances 60 s for every real second. */
 const SPEED_FACTOR = 60;
@@ -38,6 +45,73 @@ export class DemoHealthDataSource implements HealthDataSource {
   private speedFactor = SPEED_FACTOR;
   private timer: ReturnType<typeof setInterval> | null = null;
   private readonly listeners = new Set<(update: HealthUpdate) => void>();
+  private historyDays: DemoHistoryDays | null = null;
+  private demoState: DemoState | null = null;
+  private anchor = new Date().toISOString();
+  private events: HealthEvent[] = [];
+  private eventSequence = 0;
+  private liveTimer: ReturnType<typeof setInterval> | null = null;
+  private liveSamples: LiveSample[] = [];
+  private liveTick = 0;
+  private readonly plans: DailyPlanStore;
+
+  constructor(storage: PlanStorage | null = browserPlanStorage()) { this.plans = new DailyPlanStore(storage); }
+
+  setDailyMode(mode: DailyPlanRecord["mode"]): void {
+    if (!["activity", "recovery"].includes(mode)) return;
+    this.plans.change(record => ({ ...record, mode }));
+    this.record("plan", "Daily plan updated", `Today's demo plan: ${mode}. This is not a prescribed medical target.`); this.publish();
+  }
+  saveActiveMinutes(minutes: number): void {
+    if (!Number.isInteger(minutes) || minutes < 0 || minutes > 1440 || this.getUpdate().snapshot.overall.state === "assist") return;
+    this.plans.change(record => ({ ...record, activeMinutes: minutes, activeRecordedAt: new Date().toISOString() }));
+    this.record("plan", "Activity recorded", `${minutes} active minutes entered for today's demo plan.`); this.publish();
+  }
+  confirmDailyTask(task: "recovery" | "measurements"): void {
+    if (!["recovery", "measurements"].includes(task)) return;
+    this.plans.change(record => task === "recovery" ? { ...record, recoveryConfirmed: true } : { ...record, measurementsReviewed: true });
+    this.record("plan", "Daily task confirmed", task === "recovery" ? "Recovery plan review confirmed by the user." : "Measurement review confirmed by the user."); this.publish();
+  }
+  saveCheckIn(input: Omit<WellbeingCheckIn, "savedAt">): void {
+    if (!validCheckIn(input)) return;
+    this.plans.change(record => ({ ...record, checkIn: { ...input, reflection: input.reflection.trim(), savedAt: new Date().toISOString() } }));
+    this.record("plan", "Wellbeing check-in saved", `Today's self-rating: ${input.rating}/10. No diagnosis was inferred.`); this.publish();
+  }
+
+  populateHistory(days: 7 | 30 | 90): void {
+    if (![7, 30, 90].includes(days)) return;
+    this.resetLiveSamples();
+    this.stopTimer(); this.runState = "idle"; this.elapsedSeconds = 0;
+    this.historyDays = days; this.demoState = "stable"; this.anchor = new Date().toISOString();
+    this.record("data", `${days} days of demo data generated`, "Daily synthetic samples replaced the previous measurement history.");
+    this.publish();
+  }
+
+  clearData(): void {
+    this.plans.clear();
+    this.resetLiveSamples();
+    this.stopTimer(); this.runState = "idle"; this.elapsedSeconds = 0;
+    this.historyDays = 0; this.demoState = null; this.events = []; this.anchor = new Date().toISOString();
+    this.record("data", "Demo data cleared", "Measurements, saved daily plans and prior event entries were removed.");
+    this.publish();
+  }
+
+  setDemoState(state: DemoState): void {
+    if (this.historyDays === 0 || !["stable", "check", "urgent", "missing"].includes(state)) return;
+    this.resetLiveSamples();
+    this.stopTimer(); this.runState = "idle"; this.demoState = state;
+    this.record("state", `Demo state: ${state}`, "Manually selected synthetic scenario; not an automated diagnosis.");
+    this.publish();
+  }
+
+  recordReportExport(recipient: "earth" | "crew"): void {
+    this.record("report", "Report export prepared", `Intended recipient: ${recipient === "earth" ? "Earth medical team" : "Crew medical officer"}. No transmission was made.`);
+    this.publish();
+  }
+
+  private record(kind: HealthEvent["kind"], title: string, detail: string): void {
+    this.events = [{ id: `event-${++this.eventSequence}`, at: new Date().toISOString(), kind, title, detail }, ...this.events].slice(0, 100);
+  }
 
   listScenarios(): DemoScenario[] {
     return SCENARIOS;
@@ -45,20 +119,31 @@ export class DemoHealthDataSource implements HealthDataSource {
 
   getUpdate(): HealthUpdate {
     return {
-      snapshot: buildSnapshot(this.scenarioId, this.elapsedSeconds),
+      snapshot: applyPlanReadings(applyLiveSamples(configureDemoSnapshot(buildSnapshot(this.scenarioId, this.elapsedSeconds), this.historyDays, new Date(Date.parse(this.anchor) + (this.historyDays === null ? this.elapsedSeconds * 1000 : 0)).toISOString(), this.demoState), this.liveSamples), this.plans.state()),
+      dailyPlan: this.plans.state(),
       control: this.controlState(),
+      events: this.events.map(event => ({ ...event })),
     };
   }
 
   subscribe(listener: (update: HealthUpdate) => void): () => void {
     this.listeners.add(listener);
+    if (this.liveTimer === null) this.liveTimer = setInterval(() => {
+      if (this.historyDays === 0 || this.runState !== "idle" || (typeof document !== "undefined" && document.hidden)) return;
+      this.liveSamples = [...this.liveSamples, { at: new Date().toISOString(), tick: ++this.liveTick }].slice(-60);
+      this.publish();
+    }, 5000);
     listener(this.getUpdate());
     return () => {
       this.listeners.delete(listener);
+      if (this.listeners.size === 0 && this.liveTimer !== null) { clearInterval(this.liveTimer); this.liveTimer = null; }
     };
   }
 
   runScenario(id: ScenarioId): void {
+    this.resetLiveSamples();
+    this.anchor = new Date().toISOString();
+    this.historyDays = null; this.demoState = null;
     this.scenarioId = id;
     this.elapsedSeconds = 0;
     this.runState = "running";
@@ -85,6 +170,9 @@ export class DemoHealthDataSource implements HealthDataSource {
   }
 
   reset(): void {
+    this.resetLiveSamples();
+    this.anchor = new Date().toISOString();
+    this.historyDays = null; this.demoState = null;
     this.stopTimer();
     this.runState = "idle";
     this.elapsedSeconds = 0;
@@ -93,17 +181,22 @@ export class DemoHealthDataSource implements HealthDataSource {
 
   dispose(): void {
     this.stopTimer();
+    if (this.liveTimer !== null) { clearInterval(this.liveTimer); this.liveTimer = null; }
     this.listeners.clear();
   }
 
   private controlState(): DemoControlState {
     return {
+      historyDays: this.historyDays,
+      demoState: this.demoState,
       scenarioId: this.scenarioId,
       runState: this.runState,
       speedFactor: this.speedFactor,
       scenarioClock: formatClock(this.elapsedSeconds),
     };
   }
+
+  private resetLiveSamples(): void { this.liveSamples = []; this.liveTick = 0; }
 
   private startTimer(): void {
     this.stopTimer();
@@ -121,10 +214,7 @@ export class DemoHealthDataSource implements HealthDataSource {
   }
 
   private publish(): void {
-    const update: HealthUpdate = {
-      snapshot: buildSnapshot(this.scenarioId, this.elapsedSeconds),
-      control: this.controlState(),
-    };
+    const update = this.getUpdate();
     for (const listener of this.listeners) {
       listener(update);
     }

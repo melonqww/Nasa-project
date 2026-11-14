@@ -18,8 +18,6 @@ const ORBIT_POINTS = [
 
 interface HealthOrbitProps {
   state: OverallState;
-  score: number;
-  label: string;
   metrics: MetricReading[];
   selectedMetric: MetricId | null;
   overlayOpen: boolean;
@@ -31,8 +29,6 @@ interface HealthOrbitProps {
 /** Ball plus the five circular indicators hugging its lower perimeter. */
 export function HealthOrbit({
   state,
-  score,
-  label,
   metrics,
   selectedMetric,
   overlayOpen,
@@ -44,8 +40,6 @@ export function HealthOrbit({
     <div className="orbit">
       <StatusBall
         state={state}
-        score={score}
-        label={label}
         expanded={overlayOpen}
         onOpen={onOpenHealth}
       />

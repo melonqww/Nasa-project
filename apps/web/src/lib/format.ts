@@ -3,6 +3,7 @@ export function formatTime(iso: string | null): string {
     return "no reading";
   }
   return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "UTC",
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
@@ -15,6 +16,7 @@ export function formatClockTime(iso: string | null): string {
     return "—";
   }
   return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "UTC",
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
@@ -30,6 +32,7 @@ export function formatValue(value: number): string {
 
 /** Short human duration for a history span. */
 export function formatSpan(seconds: number): string {
+  if (seconds >= 86400) return `${formatValue(seconds / 86400)} days`;
   if (seconds < 60) {
     return `${Math.round(seconds)} s`;
   }

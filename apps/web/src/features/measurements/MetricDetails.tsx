@@ -1,242 +1,77 @@
 import { useMemo, useState } from "react";
 import type { MetricReading, Recommendation } from "@ahm/contracts";
-
-import { formatClockTime, formatSpan, formatTime, formatValue } from "../../lib/format";
+import { formatTime, formatValue } from "../../lib/format";
 import { TrendChart } from "../history/TrendChart";
-import {
-  HISTORY_PERIODS,
-  filterTrend,
-  referenceTime,
-  sortTrend,
-  type PeriodId,
-} from "../history/periods";
+import { HISTORY_PERIODS, dailyTrend, filterTrend, referenceTime, sortTrend, type PeriodId } from "../history/periods";
 import { computeStatistics } from "../history/statistics";
-
+import { MEASUREMENT_INFO } from "./measurementInfo";
+import { Disclosure } from "../../components/Disclosure";
+import { measurementContext } from "../../lib/measurementContext";
 import "./metric-details.css";
 
 const STATUS_TEXT: Record<MetricReading["status"], string> = {
-  normal: "No alert",
-  watch: "Check needed",
-  alert: "Alert",
-  unavailable: "No data",
+  normal: "No demo alert", watch: "Check needed", alert: "Needs attention", unavailable: "No current reading",
 };
-
-const SEVERITY_LABEL: Record<Recommendation["severity"], string> = {
-  info: "Info",
-  check: "Check",
-  urgent: "Urgent",
-};
-
-interface MetricDetailsProps {
-  reading: MetricReading;
-  recommendations: Recommendation[];
-  /** Snapshot time, used only when the reading has no timestamp at all. */
-  fallbackAt: string;
-}
-
-/**
- * Full details for the selected indicator: value and provenance, a chart and
- * statistics over the same selected period, and prepared guidance delivered by
- * the data source. The component calculates only arithmetic over the points.
- */
-export function MetricDetails({ reading, recommendations, fallbackAt }: MetricDetailsProps) {
-  const [periodId, setPeriodId] = useState<PeriodId>("5m");
-  const period = HISTORY_PERIODS.find((item) => item.id === periodId) ?? HISTORY_PERIODS[0]!;
-
-  const sortedTrend = useMemo(() => sortTrend(reading.trend), [reading.trend]);
-  const referenceAt = useMemo(
-    () => referenceTime({ measuredAt: reading.measuredAt, trend: sortedTrend }, fallbackAt),
-    [reading.measuredAt, sortedTrend, fallbackAt],
-  );
-  const points = useMemo(
-    () => filterTrend(sortedTrend, period, referenceAt),
-    [sortedTrend, period, referenceAt],
-  );
-  const statistics = useMemo(() => computeStatistics(points), [points]);
-
-  const missingCurrent = reading.status === "unavailable";
-  const hasAnyHistory = sortedTrend.length > 0;
-
-  return (
-    <div className="metric-details">
-      <header className="metric-details__hero">
-        <div>
-          <p className="metric-details__label">{reading.label}</p>
-          <p className="metric-details__value" data-status={reading.status}>
-            {reading.value !== null ? (
-              <>
-                <span className="metric-details__number">{reading.value}</span>
-                <span className="metric-details__unit">{reading.unit}</span>
-              </>
-            ) : (
-              <span className="metric-details__number metric-details__number--empty">No data</span>
-            )}
-          </p>
-        </div>
-
-        <div className="metric-details__meta">
-          <span className="metric-details__pill" data-status={reading.status}>
-            {STATUS_TEXT[reading.status]}
-          </span>
-          <span>{formatTime(reading.measuredAt)}</span>
-          <span aria-hidden="true">·</span>
-          <span>{reading.quality} quality</span>
-          <span aria-hidden="true">·</span>
-          <span>{reading.source} · synthetic</span>
-        </div>
-      </header>
-
-      <p className="metric-details__caption">{reading.caption}</p>
-
-      {missingCurrent && (
-        <p className="metric-details__warning" role="status">
-          No current reading. The chart shows only history that was actually delivered; the gap is
-          not connected and is not treated as a normal value.
-        </p>
-      )}
-
-      <section className="metric-details__block" aria-labelledby="period-heading">
-        <div className="metric-details__block-head">
-          <div>
-            <h3 className="metric-details__block-title" id="period-heading">
-              History
-            </h3>
-            <p className="metric-details__block-note">
-              {reading.metric === "sleep"
-                ? "Each point is one completed sleep period, not a nightly average."
-                : "The chart and statistics below use the same filtered points."}
-            </p>
-          </div>
-
-          <div className="period-switch" role="group" aria-label="History period">
-            {HISTORY_PERIODS.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                className="period-switch__button"
-                aria-pressed={item.id === period.id}
-                onClick={() => setPeriodId(item.id)}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <TrendChart
-          points={points}
-          label={reading.label}
-          unit={reading.unit}
-          periodLabel={period.label}
-          referenceAt={referenceAt}
-        />
-
-        {!hasAnyHistory && (
-          <p className="metric-details__history-note">
-            The source delivered no trend points for this indicator. Statistics are not shown
-            instead of inventing a history.
-          </p>
-        )}
-      </section>
-
-      <section className="metric-details__block" aria-labelledby="stats-heading">
-        <div className="metric-details__block-head">
-          <div>
-            <h3 className="metric-details__block-title" id="stats-heading">
-              Statistics · {period.label}
-            </h3>
-            <p className="metric-details__block-note">
-              Calculated from the {statistics?.count ?? 0} delivered reading
-              {statistics?.count === 1 ? "" : "s"} in this period.
-            </p>
-          </div>
-        </div>
-
-        {statistics ? (
-          <dl className="metric-details__stats">
-            <div className="metric-details__stat">
-              <dt>Latest</dt>
-              <dd>{formatValue(statistics.latest)}</dd>
-            </div>
-            <div className="metric-details__stat">
-              <dt>Average</dt>
-              <dd>{formatValue(statistics.average)}</dd>
-            </div>
-            <div className="metric-details__stat">
-              <dt>Minimum</dt>
-              <dd>{formatValue(statistics.min)}</dd>
-            </div>
-            <div className="metric-details__stat">
-              <dt>Maximum</dt>
-              <dd>{formatValue(statistics.max)}</dd>
-            </div>
-            <div className="metric-details__stat">
-              <dt>Range</dt>
-              <dd>{formatValue(statistics.range)}</dd>
-            </div>
-            <div className="metric-details__stat">
-              <dt>Readings</dt>
-              <dd>{statistics.count}</dd>
-            </div>
-            <div className="metric-details__stat">
-              <dt>Span</dt>
-              <dd>{formatSpan(statistics.spanSeconds)}</dd>
-            </div>
-            <div className="metric-details__stat">
-              <dt>Last reading</dt>
-              <dd>{formatClockTime(statistics.latestAt)}</dd>
-            </div>
-          </dl>
-        ) : (
-          <p className="metric-details__stats-empty">
-            No statistics for this period. Nothing is filled in.
-          </p>
-        )}
-      </section>
-
-      <section className="metric-details__block" aria-labelledby="guidance-heading">
-        <div className="metric-details__block-head">
-          <div>
-            <h3 className="metric-details__block-title" id="guidance-heading">
-              Prepared guidance
-            </h3>
-            <p className="metric-details__block-note">
-              Written in advance for the synthetic scenario. Not generated here and not a medical
-              protocol.
-            </p>
-          </div>
-        </div>
-
-        {recommendations.length > 0 ? (
-          <ul className="metric-details__guidance">
-            {recommendations.map((recommendation) => (
-              <li key={recommendation.id} className="metric-details__guidance-item">
-                <span className="metric-details__severity" data-severity={recommendation.severity}>
-                  {SEVERITY_LABEL[recommendation.severity]}
-                </span>
-                <div>
-                  <p className="metric-details__guidance-title">{recommendation.title}</p>
-                  <p className="metric-details__guidance-body">{recommendation.body}</p>
-                  <p className="metric-details__source">{recommendation.source}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="metric-details__stats-empty">
-            No prepared guidance was delivered for the current state.
-          </p>
-        )}
-
-        <p className="metric-details__source">
-          Indicator source: {reading.source} · {reading.quality} quality · synthetic data.
-        </p>
-      </section>
-
-      <p className="metric-details__note">
-        Missing readings stay a separate state and are never shown as normal. The demo health index
-        is a prepared demo value, not a diagnosis.
-      </p>
-    </div>
-  );
+export function MetricDetails({ reading, recommendations, fallbackAt, onCheckIn, onSensorCheck }: {
+  reading: MetricReading; recommendations: Recommendation[]; fallbackAt: string; onCheckIn?: () => void; onSensorCheck?: () => void;
+}) {
+  const [periodId, setPeriodId] = useState<PeriodId>("all");
+  const period = HISTORY_PERIODS.find(item => item.id === periodId)!;
+  const trend = useMemo(() => sortTrend(reading.trend), [reading.trend]);
+  const at = referenceTime(reading, fallbackAt);
+  const dailyView = period.seconds !== null ? period.seconds >= 86400 : trend.length > 1 && Date.parse(trend.at(-1)!.at) - Date.parse(trend[0]!.at) >= 86400000;
+  const points = useMemo(() => { const filtered = filterTrend(trend, period, at); return dailyView ? dailyTrend(filtered) : filtered; }, [trend, period, at, dailyView]);
+  const stats = useMemo(() => computeStatistics(points), [points]);
+  const multiDay = trend.length > 1 && Date.parse(trend.at(-1)!.at) - Date.parse(trend[0]!.at) >= 86400000;
+  const continuous = ["heartRate", "respiratoryRate", "spo2"].includes(reading.metric);
+  const periods = HISTORY_PERIODS.filter(item => continuous || item.seconds === null || (multiDay ? item.seconds >= 86400 : item.seconds < 86400));
+  const guidance = recommendations.filter(item => item.severity !== "info" && item.metricIds?.includes(reading.metric));
+  const info = MEASUREMENT_INFO[reading.metric];
+  const contextUrl = ["heartRate", "temperature", "respiratoryRate", "systolicPressure", "diastolicPressure"].includes(reading.metric)
+    ? "https://www.nasa.gov/wp-content/uploads/2023/04/ochmo-std-100.1a.pdf#page=38"
+    : "https://www.nasa.gov/hrp/risks/";
+  return <article className="metric-details">
+    <header className="metric-details__hero">
+      <div><h2 className="metric-details__label">{reading.label}</h2>
+        <p className="metric-details__value"><span className="metric-details__number">{reading.value === null ? "—" : formatValue(reading.value)}</span>
+          {reading.value !== null && <span className="metric-details__unit">{reading.unit}</span>}</p>
+      </div>
+      <div className="metric-details__meta">
+        <span>{measurementContext(reading)}</span>
+        <span className="metric-details__pill" data-status={reading.status}>{STATUS_TEXT[reading.status]}</span>
+        <span>{reading.measuredAt ? `Measured at ${formatTime(reading.measuredAt)} UTC` : "No measurement timestamp"}</span>
+      </div>
+    </header>
+    <p className="metric-details__caption">{continuous && reading.value !== null ? "Synthetic samples · updates every 5 seconds" : reading.caption.split(" Daily synthetic")[0]}</p>
+    {reading.value === null && <div className="metric-details__warning"><p>{reading.metric === "wellbeing" ? "Your own rating supplies today's wellbeing value." : "No current measurement. Previous readings do not describe your current condition."}</p>{(reading.metric === "wellbeing" ? onCheckIn : reading.metric === "spo2" ? onSensorCheck : undefined) && <button type="button" className="next-action" onClick={reading.metric === "wellbeing" ? onCheckIn : onSensorCheck}>{reading.metric === "wellbeing" ? "Complete today's check-in" : "Check the sensor"}</button>}</div>}
+    <section className="metric-details__block" aria-label="Measurement history">
+      <div className="metric-details__block-head"><h3>History</h3>
+        {trend.length > 1 && <div className="period-switch" data-expanded={continuous} role="group" aria-label="History period">
+          {periods.map(item => <button key={item.id} type="button" aria-pressed={periodId === item.id} onClick={() => setPeriodId(item.id)}>{item.seconds === null ? "All" : item.label}</button>)}
+        </div>}
+      </div>
+      {dailyView && <p className="metric-details__caption">Last available reading per UTC day. Use 1 min or 5 min for live samples.</p>}
+      {points.length > 0 ? <TrendChart points={points} label={reading.label} unit={reading.unit} periodLabel={period.label} referenceAt={at} /> :
+        <p className="metric-details__empty">No measurements recorded in this period.</p>}
+      {stats && stats.count > 1 && <dl className="metric-details__stats">
+        {[["Minimum", stats.min], ["Average", stats.average], ["Maximum", stats.max]].map(([label, value]) =>
+          <div key={label}><dt>{label}</dt><dd>{formatValue(Number(value))}<small>{reading.unit}</small></dd></div>)}
+      </dl>}
+      {points.length === 1 && <p className="metric-details__caption">One measurement is available. More readings are needed to show a trend.</p>}
+    </section>
+    {guidance.length > 0 && <section className="metric-details__block" aria-label="Suggested next steps">
+      <h3>Next steps</h3>{guidance.map(item => <div key={item.id}><h4>{item.title}</h4><p>{item.body}</p></div>)}
+    </section>}
+    <Disclosure title="About this measurement" className="measurement-source">
+      <p><strong>What it means.</strong> {info.meaning}</p>
+      <p><strong>Real measurement method.</strong> {info.method}</p>
+      <p><strong>What it cannot tell you.</strong> {info.limit}</p>
+      <p><strong>Reading the chart.</strong> Each point is one synthetic sample, not a daily clinical assessment. Hover, tap or use the arrow keys to inspect its value and UTC timestamp. Missing intervals are left unconnected.</p>
+      <p><strong>Comparing readings.</strong> Compare measurements made with the same method and similar activity conditions. Symptoms, personal baseline and signal quality matter alongside the number.</p>
+      <p><strong>Statistics.</strong> Daily views use the last reading of each UTC day. Minute views use the available live samples. Minimum, average and maximum use those same displayed points; the average is not time-weighted.</p>
+      <p>Source: {reading.source}. Data quality: {reading.quality}. All displayed measurements are synthetic.</p>
+      <p>Demo status labels are not clinical assessments. Real measurements require the appropriate device and a validated mission protocol.</p>
+      <p><a href={contextUrl} target="_blank" rel="noreferrer">Measurement context from NASA</a></p>
+    </Disclosure>
+  </article>;
 }

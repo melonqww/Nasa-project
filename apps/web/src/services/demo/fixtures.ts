@@ -26,6 +26,22 @@ export interface MetricMeta {
 }
 
 export const METRIC_META: Record<MetricId, MetricMeta> = {
+  respiratoryRate: {
+    label: "Respiratory rate", unit: "breaths/min",
+    caption: "Breaths per minute from a simulated respiratory sensor.",
+  },
+  temperature: {
+    label: "Body temperature", unit: "°C",
+    caption: "Simulated body temperature from an oral probe; not skin temperature.",
+  },
+  systolicPressure: {
+    label: "Systolic pressure", unit: "mmHg",
+    caption: "The upper blood pressure value, from simulated cuff measurements.",
+  },
+  diastolicPressure: {
+    label: "Diastolic pressure", unit: "mmHg",
+    caption: "The lower blood pressure value, paired with the upper cuff measurement.",
+  },
   heartRate: {
     label: "Heart rate",
     unit: "bpm",

@@ -50,7 +50,8 @@ export function computeStatistics(points: TrendPoint[]): TrendStatistics | null 
 
 /**
  * Split a trend at real gaps so the chart never draws a line through missing
- * data. A gap is longer than 2.5× the median interval of the period.
+ * data. Use source-declared cadence when available, otherwise the median.
+ * Daily history and a 5-second live stream must not redefine each other's cadence.
  */
 export function splitAtGaps(points: TrendPoint[]): TrendPoint[][] {
   if (points.length <= 1) {
@@ -86,7 +87,9 @@ export function splitAtGaps(points: TrendPoint[]): TrendPoint[][] {
 
     const previous = points[index - 1];
     const gap = previous ? Date.parse(point.at) - Date.parse(previous.at) : 0;
-    if (gap > gapThreshold) {
+    const threshold = point.expectedIntervalSeconds && point.expectedIntervalSeconds > 0
+      ? Math.max(point.expectedIntervalSeconds * 2500, 1500) : gapThreshold;
+    if (gap > threshold) {
       segments.push(currentSegment);
       currentSegment = [point];
     } else {

@@ -1,6 +1,6 @@
 import type { TrendPoint } from "@ahm/contracts";
 
-export type PeriodId = "1m" | "5m" | "all";
+export type PeriodId = "1m" | "5m" | "7d" | "30d" | "90d" | "all";
 
 export interface HistoryPeriod {
   id: PeriodId;
@@ -17,6 +17,9 @@ export interface HistoryPeriod {
 export const HISTORY_PERIODS: HistoryPeriod[] = [
   { id: "1m", label: "1 min", seconds: 60 },
   { id: "5m", label: "5 min", seconds: 300 },
+  { id: "7d", label: "7 days", seconds: 7 * 86400 },
+  { id: "30d", label: "30 days", seconds: 30 * 86400 },
+  { id: "90d", label: "90 days", seconds: 90 * 86400 },
   { id: "all", label: "All available", seconds: null },
 ];
 
@@ -57,4 +60,11 @@ export function filterTrend(
     const at = Date.parse(point.at);
     return !Number.isNaN(at) && at >= from && at <= referenceMs;
   });
+}
+
+/** Daily views retain the last actual sample in each UTC day, never a stack of live ticks. */
+export function dailyTrend(points: TrendPoint[]): TrendPoint[] {
+  const days = new Map<string, TrendPoint>();
+  for (const point of sortTrend(points)) days.set(point.at.slice(0, 10), point);
+  return [...days.values()].map(point => ({ ...point, expectedIntervalSeconds: 86400 }));
 }

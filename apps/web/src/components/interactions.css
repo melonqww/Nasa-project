@@ -1,0 +1,21 @@
+.expand-chevron { width:17px; height:17px; flex-shrink:0; transform:rotate(90deg); transition:transform 280ms cubic-bezier(.2,.8,.2,1); }
+[data-open="true"] > .disclosure__trigger .expand-chevron,
+[data-open="true"] > .select-menu__trigger .expand-chevron,
+[data-open="true"] > .demo-tools__trigger .expand-chevron { transform:rotate(270deg); }
+.disclosure__trigger { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:6px 0; width:100%; border:0; background:none; text-align:left; color:inherit; font-weight:500; }
+.disclosure__reveal { display:grid; grid-template-rows:0fr; opacity:0; transition:grid-template-rows 320ms cubic-bezier(.2,.8,.2,1),opacity 240ms; }
+.disclosure[data-open="true"] > .disclosure__reveal { grid-template-rows:1fr; opacity:1; }
+.disclosure__body { min-height:0; overflow:hidden; }
+.animated-popover { opacity:0; visibility:hidden; pointer-events:none; transform:translateY(-7px) scale(.98); transform-origin:top right; transition:opacity 200ms,transform 260ms cubic-bezier(.2,.8,.2,1),visibility 260ms; }
+.animated-popover[data-open="true"] { opacity:1; visibility:visible; pointer-events:auto; transform:translateY(0) scale(1); }
+.select-menu { position:relative; margin:18px 0 12px; }
+.select-menu__label { display:block; margin-bottom:9px; font-size:15px; }
+.select-menu__trigger { display:flex; align-items:center; justify-content:space-between; gap:16px; width:100%; padding:13px 18px; border:1px solid #cdd8d0; border-radius:11px; background:#fff; text-align:left; font-size:15px; }
+.select-menu__trigger:hover { border-color:#8cad9b; }
+.select-menu__popup { position:absolute; top:calc(100% + 8px); left:0; right:0; z-index:10; padding:6px; border:1px solid #d1ddd5; border-radius:14px; box-shadow:0 12px 32px #213c4a1a; background:#fff; transform-origin:top center; }
+.select-menu__popup button { display:flex; justify-content:space-between; align-items:center; gap:16px; width:100%; border:0; border-radius:9px; padding:12px; background:none; text-align:left; font-size:15px; }
+.select-menu__popup button:hover,.select-menu__popup button:focus-visible { background:#edf4ef; }
+.select-menu__popup button[aria-selected="true"] { color:#35634b; background:#eaf2ed; }
+.select-menu__popup small { display:block; color:#6c7d74; font-size:12px; margin-top:4px; }
+.select-menu__check { width:18px; flex-shrink:0; }
+@media(prefers-reduced-motion:reduce) { .expand-chevron,.disclosure__reveal,.animated-popover { transition:none; } }

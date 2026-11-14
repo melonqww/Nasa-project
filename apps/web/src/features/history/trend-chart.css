@@ -11,12 +11,11 @@
   height: auto;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  background:
-    linear-gradient(180deg, rgba(15, 31, 45, 0.7), rgba(9, 18, 27, 0.7));
+  background: #fafbfc;
 }
 
 .trend-chart__grid {
-  stroke: rgba(160, 190, 215, 0.14);
+  stroke: #e0e5e9;
   stroke-width: 1;
   stroke-dasharray: 4 6;
 }
@@ -24,7 +23,7 @@
 .trend-chart__axis-label {
   fill: var(--text-faint);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 13px;
 }
 
 .trend-chart__line {
@@ -44,7 +43,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  font-size: 11px;
+  font-size: 14px;
   color: var(--text-faint);
 }
 
@@ -52,7 +51,7 @@
   padding: var(--space-5);
   border: 1px dashed var(--border-strong);
   border-radius: var(--radius-md);
-  background: rgba(12, 22, 31, 0.6);
+  background: var(--surface);
 }
 
 .trend-chart__empty-title {
@@ -67,4 +66,24 @@
   font-size: 12px;
   color: var(--text-faint);
   line-height: 1.5;
+}
+
+.trend-chart__plot { position:relative; min-width:0; }
+.trend-chart__svg { touch-action:pan-y; cursor:crosshair; }
+.trend-chart__svg:focus,.trend-chart__svg:focus-visible { outline:none; background:#fafbfc; }
+.trend-chart__selection line { stroke:#6d9a80; stroke-width:1; stroke-dasharray:4 4; }
+.trend-chart__selection circle { fill:#477b60; stroke:white; stroke-width:2; }
+.trend-chart__tooltip { --tooltip-x:12px; --tooltip-y:14px; position:absolute; transform:translate(var(--tooltip-x),var(--tooltip-y)); width:210px; padding:13px 15px; border:1px solid #cedbd2; border-radius:12px; background:#fffffff5; box-shadow:0 8px 28px #233b461c; pointer-events:none; z-index:3; display:flex; flex-direction:column; gap:4px; font-size:13px; color:#51655a; }
+.trend-chart__tooltip { --tooltip-x:0px; }
+.trend-chart__tooltip[data-above="true"] { --tooltip-y:calc(-100% - 14px); }
+.trend-chart__tooltip strong { font-size:24px; color:#263e30; font-weight:600; }
+.trend-chart__tooltip strong small { font-size:13px; font-weight:400; }
+.trend-chart__tooltip time,.trend-chart__tooltip > small { font-size:11px; }
+.trend-chart__help { font-size:12px; color:#708079; line-height:1.5; }
+@media (max-width:640px) {
+  .trend-chart { gap:12px; }
+  .trend-chart__axis-label { font-size:13px; }
+  .trend-chart__tooltip { width:172px; padding:10px 12px; }
+  .trend-chart__tooltip strong { font-size:21px; }
+  .trend-chart__caption { font-size:12px; line-height:1.7; }
 }

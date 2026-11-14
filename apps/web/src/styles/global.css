@@ -14,10 +14,7 @@ body,
 
 body {
   margin: 0;
-  background:
-    radial-gradient(900px 600px at 18% -10%, rgba(52, 96, 124, 0.32), transparent 60%),
-    radial-gradient(700px 520px at 88% 8%, rgba(38, 80, 96, 0.22), transparent 65%),
-    var(--bg);
+  background: var(--bg);
   color: var(--text);
   font-family: var(--font-ui);
   font-size: 16px;
@@ -40,6 +37,11 @@ select {
 
 button {
   cursor: pointer;
+  transition:background-color 180ms,border-color 180ms,color 180ms,box-shadow 180ms;
+}
+
+@media(prefers-reduced-motion:reduce) {
+  *,*::before,*::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; scroll-behavior:auto !important; }
 }
 
 a {
@@ -47,10 +49,13 @@ a {
 }
 
 :focus-visible {
-  outline: 2px solid var(--state-clear);
-  outline-offset: 3px;
+  outline: none;
+  background-color: #e8f0eb;
   border-radius: var(--radius-sm);
 }
+
+*:focus { outline:none; }
+button,a,input,select { -webkit-tap-highlight-color:transparent; }
 
 .skip-link {
   position: absolute;

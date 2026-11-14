@@ -1,4 +1,4 @@
-import { useId } from "react";
+import { useEffect, useId, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import type { TrendPoint } from "@ahm/contracts";
 
 import { formatClockTime, formatSpan, formatValue } from "../../lib/format";
@@ -6,9 +6,7 @@ import { splitAtGaps } from "../history/statistics";
 
 import "./trend-chart.css";
 
-const WIDTH = 720;
-const HEIGHT = 250;
-const PADDING = { top: 18, right: 18, bottom: 34, left: 50 };
+const PADDING = { top: 18, right: 18, bottom: 38, left: 72 };
 
 interface TrendChartProps {
   points: TrendPoint[];
@@ -23,11 +21,13 @@ interface ChartGeometry {
   y: (value: number) => number;
   minValue: number;
   maxValue: number;
+  low: number;
+  high: number;
   startAt: string;
   endAt: string;
 }
 
-function buildGeometry(points: TrendPoint[]): ChartGeometry {
+function buildGeometry(points: TrendPoint[], width: number, height: number, left: number): ChartGeometry {
   const times = points.map((point) => Date.parse(point.at));
   const values = points.map((point) => point.value);
   const minTime = Math.min(...times);
@@ -40,19 +40,21 @@ function buildGeometry(points: TrendPoint[]): ChartGeometry {
   const low = minValue - padding;
   const high = maxValue + padding;
 
-  const plotWidth = WIDTH - PADDING.left - PADDING.right;
-  const plotHeight = HEIGHT - PADDING.top - PADDING.bottom;
+  const plotWidth = width - left - PADDING.right;
+  const plotHeight = height - PADDING.top - PADDING.bottom;
 
   return {
     x: (at) => {
       if (maxTime === minTime) {
-        return PADDING.left + plotWidth / 2;
+        return left + plotWidth / 2;
       }
-      return PADDING.left + ((Date.parse(at) - minTime) / (maxTime - minTime)) * plotWidth;
+      return left + ((Date.parse(at) - minTime) / (maxTime - minTime)) * plotWidth;
     },
     y: (value) => PADDING.top + (1 - (value - low) / (high - low)) * plotHeight,
     minValue,
     maxValue,
+    low,
+    high,
     startAt: points[0]?.at ?? "",
     endAt: points[points.length - 1]?.at ?? "",
   };
@@ -64,6 +66,30 @@ function buildGeometry(points: TrendPoint[]): ChartGeometry {
  */
 export function TrendChart({ points, label, unit, periodLabel, referenceAt }: TrendChartProps) {
   const titleId = useId();
+  const [compact, setCompact] = useState(() => window.matchMedia("(max-width: 640px)").matches);
+  const [inspected, setInspected] = useState<{ point: TrendPoint; left: number; top: number } | null>(null);
+  const plotRef = useRef<HTMLDivElement>(null);
+  const [measuredWidth, setMeasuredWidth] = useState(360);
+  const empty = points.length === 0;
+  useEffect(() => {
+    if (!plotRef.current) return;
+    const observer = new ResizeObserver(entries => {
+      const width = entries[0]?.contentRect.width;
+      if (width && width > 0) setMeasuredWidth(Math.round(width));
+    });
+    observer.observe(plotRef.current);
+    return () => observer.disconnect();
+  }, [empty]);
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 640px)");
+    const change = () => setCompact(query.matches);
+    query.addEventListener("change", change);
+    return () => query.removeEventListener("change", change);
+  }, []);
+  const WIDTH = compact ? Math.max(200, measuredWidth) : 720;
+  const HEIGHT = compact ? 280 : 250;
+  const leftPadding = compact ? 52 : PADDING.left;
+  const visibleInspection = inspected && points.some(point => point.at === inspected.point.at && point.value === inspected.point.value) ? inspected : null;
 
   if (points.length === 0) {
     return (
@@ -77,38 +103,67 @@ export function TrendChart({ points, label, unit, periodLabel, referenceAt }: Tr
     );
   }
 
-  const geometry = buildGeometry(points);
+  const geometry = buildGeometry(points, WIDTH, HEIGHT, leftPadding);
   const segments = splitAtGaps(points);
-  const plotWidth = WIDTH - PADDING.left - PADDING.right;
+  const plotWidth = WIDTH - leftPadding - PADDING.right;
   const plotHeight = HEIGHT - PADDING.top - PADDING.bottom;
   const gridLines = [0, 0.5, 1];
-  const ariaLabel = `${label} history for ${periodLabel}: ${points.length} readings from ${formatClockTime(
+  const longRange = Date.parse(geometry.endAt) - Date.parse(geometry.startAt) >= 86400000;
+  const axisTime = (at: string) => longRange ? new Intl.DateTimeFormat("en-GB", {
+    timeZone: "UTC", day: "2-digit", month: "short", ...(compact ? {} : { year: "numeric" as const }),
+  }).format(new Date(at)) : formatClockTime(at);
+  const ariaLabel = `${label} history for ${periodLabel}: ${points.length} readings from ${axisTime(
     geometry.startAt,
-  )} to ${formatClockTime(geometry.endAt)}. Reference ${formatClockTime(referenceAt)}.`;
+  )} to ${axisTime(geometry.endAt)}. Reference ${axisTime(referenceAt)}.`;
+  const inspect = (event: PointerEvent<SVGSVGElement>) => {
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const x = (event.clientX - bounds.left) / bounds.width * WIDTH;
+    if (x < leftPadding - 10 || x > WIDTH - PADDING.right + 10) { setInspected(null); return; }
+    const point = points.reduce((nearest, candidate) => Math.abs(geometry.x(candidate.at) - x) < Math.abs(geometry.x(nearest.at) - x) ? candidate : nearest);
+    setInspected({ point, left: (event.clientX - bounds.left) / bounds.width * 100, top: (event.clientY - bounds.top) / bounds.height * 100 });
+  };
+  const keyboard = (event: KeyboardEvent<SVGSVGElement>) => {
+    if (event.key === "Escape") { setInspected(null); return; }
+    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+    event.preventDefault();
+    const current = visibleInspection ? points.findIndex(point => point.at === visibleInspection.point.at) : -1;
+    const index = event.key === "Home" ? 0 : event.key === "End" ? points.length - 1 : Math.max(0, Math.min(points.length - 1, current + (event.key === "ArrowLeft" ? -1 : 1)));
+    const point = points[index]!;
+    setInspected({ point, left: geometry.x(point.at) / WIDTH * 100, top: geometry.y(point.value) / HEIGHT * 100 });
+  };
+  const dateTime = (at: string) => new Intl.DateTimeFormat("en-GB", { timeZone: "UTC", day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }).format(new Date(at));
 
   return (
     <figure className="trend-chart">
+      <div className="trend-chart__plot" ref={plotRef}>
       <svg
         className="trend-chart__svg"
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
         role="img"
         aria-labelledby={titleId}
+        tabIndex={0}
+        aria-describedby={`${titleId}-help`}
+        onPointerMove={inspect}
+        onPointerDown={inspect}
+        onPointerLeave={event => { if (event.pointerType !== "touch") setInspected(null); }}
+        onKeyDown={keyboard}
+        onBlur={() => setInspected(null)}
       >
         <title id={titleId}>{ariaLabel}</title>
 
         {gridLines.map((fraction) => {
           const y = PADDING.top + fraction * plotHeight;
-          const value = geometry.maxValue - fraction * (geometry.maxValue - geometry.minValue);
+          const value = geometry.high - fraction * (geometry.high - geometry.low);
           return (
             <g key={fraction}>
               <line
                 className="trend-chart__grid"
-                x1={PADDING.left}
-                x2={PADDING.left + plotWidth}
+                x1={leftPadding}
+                x2={leftPadding + plotWidth}
                 y1={y}
                 y2={y}
               />
-              <text className="trend-chart__axis-label" x={PADDING.left - 10} y={y + 4} textAnchor="end">
+              <text className="trend-chart__axis-label" x={leftPadding - 10} y={y + 4} textAnchor="end">
                 {formatValue(value)}
               </text>
             </g>
@@ -147,18 +202,28 @@ export function TrendChart({ points, label, unit, periodLabel, referenceAt }: Tr
           );
         })}
 
-        <text className="trend-chart__axis-label" x={PADDING.left} y={HEIGHT - 12} textAnchor="start">
-          {formatClockTime(geometry.startAt)}
+        {visibleInspection && <g className="trend-chart__selection" pointerEvents="none">
+          <line x1={geometry.x(visibleInspection.point.at)} x2={geometry.x(visibleInspection.point.at)} y1={PADDING.top} y2={HEIGHT - PADDING.bottom} />
+          <circle cx={geometry.x(visibleInspection.point.at)} cy={geometry.y(visibleInspection.point.value)} r={5} />
+        </g>}
+        <text className="trend-chart__axis-label" x={leftPadding} y={HEIGHT - 12} textAnchor="start">
+          {axisTime(geometry.startAt)}
         </text>
         <text
           className="trend-chart__axis-label"
-          x={PADDING.left + plotWidth}
+          x={leftPadding + plotWidth}
           y={HEIGHT - 12}
           textAnchor="end"
         >
-          {formatClockTime(geometry.endAt)}
+          {axisTime(geometry.endAt)}
         </text>
       </svg>
+      {visibleInspection && <div className="trend-chart__tooltip" role="tooltip" style={{ left: `clamp(8px, calc(${visibleInspection.left}% ${visibleInspection.left > 50 ? `- ${compact ? 184 : 222}px` : "+ 12px"}), calc(100% - ${compact ? 180 : 218}px))`, top: `${Math.max(8, Math.min(82, visibleInspection.top))}%` }} data-above={visibleInspection.top > 45}>
+        <span>{label}</span><strong>{formatValue(visibleInspection.point.value)} <small>{unit}</small></strong>
+        <time dateTime={visibleInspection.point.at}>{dateTime(visibleInspection.point.at)} UTC</time><small>Synthetic sample</small>
+      </div>}
+      </div>
+      <p id={`${titleId}-help`} className="trend-chart__help">{compact ? "Tap the chart to inspect a sample." : "Hover over the chart or use the left and right arrow keys to inspect a sample."}</p>
 
       <figcaption className="trend-chart__caption">
         <span>{periodLabel}</span>
@@ -167,7 +232,7 @@ export function TrendChart({ points, label, unit, periodLabel, referenceAt }: Tr
           {points.length} readings · {formatSpan((Date.parse(geometry.endAt) - Date.parse(geometry.startAt)) / 1000)}
         </span>
         <span aria-hidden="true">·</span>
-        <span>{unit}</span>
+        <span>{unit} · UTC</span>
         {segments.length > 1 && (
           <>
             <span aria-hidden="true">·</span>

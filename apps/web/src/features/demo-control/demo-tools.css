@@ -1,0 +1,18 @@
+.demo-tools { position:absolute; right:32px; top:44px; z-index:30; }
+.demo-tools__trigger { display:flex; gap:16px; align-items:center; list-style:none; padding:10px 16px; border:1px solid #d1d9df; border-radius:12px; background:#ffffffeb; cursor:pointer; color:#52616b; font-size:13px; }
+.demo-tools__trigger > svg { width:18px; height:18px; }
+.demo-tools[data-open="true"] > .demo-tools__trigger { border-color:#8cad9b; }
+.demo-tools__panel { position:absolute; top:calc(100% + 10px); right:0; width:320px; max-height:calc(100svh - 110px); overflow:auto; border:1px solid #d1d9df; border-radius:17px; background:#fff; padding:22px; box-shadow:0 14px 45px #213c4a1a; text-align:left; }
+.demo-tools__panel h2 { font-size:15px; margin:0 0 8px; font-weight:600; }
+.demo-tools__panel p { font-size:12px; line-height:1.6; color:#6a7a83; margin:8px 0 14px; }
+.demo-tools__days { display:flex; gap:5px; margin-bottom:24px; }
+.demo-tools__panel button { padding:9px 10px; border:1px solid #d9e1dd; background:#f8faf9; border-radius:9px; font-size:12px; }
+.demo-tools__panel button[aria-pressed="true"] { border-color:#75a68d; background:#e7f0e9; color:#35634b; }
+.demo-tools__panel button:hover:not(:disabled) { background:#eaf3ed; }
+.demo-tools__states { display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-bottom:20px; }
+.demo-tools__panel button:disabled { opacity:.45; cursor:default; }
+.demo-tools__panel .demo-tools__tour { width:100%; background:#e9f2ec; color:#396548; font-size:13px; }
+.demo-tools__panel .demo-tools__clear { width:100%; color:#9c4438; background:#fff8f6; border-color:#ead1cb; }
+@media(max-width:1100px) { .demo-tools { top:112px; right:25px; } .demo-tools__panel { max-height:calc(100svh - 175px); } }
+@media(max-width:760px) { .demo-tools { top:13px; right:18px; } .demo-tools__trigger { font-size:11px; padding:7px 10px; } .demo-tools__panel { width:min(320px,calc(100vw - 36px)); max-height:calc(100svh - 80px); } }
+@media(max-width:360px) { .demo-tools__trigger { gap:8px; } .demo-tools__trigger > svg:first-child { display:none; } .overview-header .earth-clock__time { font-size:16px; } }

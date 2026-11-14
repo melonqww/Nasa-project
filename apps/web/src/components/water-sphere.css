@@ -1,0 +1,14 @@
+@property --sphere-color { syntax:"<color>"; inherits:true; initial-value:#5db17a; }
+.water-sphere {
+  --sphere-color:#5db17a; transition:--sphere-color 1000ms ease;
+  display: block; position: relative; width: 100%; height: 100%; isolation: isolate;
+}
+.water-sphere[data-state="check"] { --sphere-color:#d3ae61; }
+.water-sphere[data-state="assist"] { --sphere-color:#cf796c; }
+.water-sphere[data-state="insufficient"] { --sphere-color:#97a9b9; }
+.water-sphere__halo { position: absolute; inset: -18% -15% -20%; z-index: 0; background: radial-gradient(ellipse, color-mix(in srgb,var(--sphere-color) 58%,transparent) 0%, color-mix(in srgb,var(--sphere-color) 32%,transparent) 35%, color-mix(in srgb,var(--sphere-color) 12%,transparent) 54%, transparent 72%); filter: blur(34px); pointer-events:none; }
+.water-sphere__shadow { position: absolute; width: 62%; height: 8%; left: 19%; bottom: 7%; background: color-mix(in srgb,var(--sphere-color) 40%,transparent); filter: blur(19px); border-radius: 50%; z-index: 1; }
+.water-sphere__canvas { position:relative; z-index:2; display: block; width: 100%; height: 100%; opacity: 0; }
+.water-sphere[data-rendered="true"] .water-sphere__canvas { opacity: 1; }
+.water-sphere__fallback { position: absolute; inset: 10%; border-radius: 49% 51% 48% 52%; border: 1px solid color-mix(in srgb,var(--sphere-color) 50%,transparent); background: radial-gradient(ellipse at 26% 20%,#fff9,transparent 48%),linear-gradient(145deg,color-mix(in srgb,var(--sphere-color) 14%,transparent) 15%,color-mix(in srgb,var(--sphere-color) 65%,transparent) 65%,#fff9); box-shadow: inset -16px -20px 30px #ffffff70, inset 3px 4px 7px #fff; }
+.water-sphere[data-rendered="true"] .water-sphere__fallback { display: none; }

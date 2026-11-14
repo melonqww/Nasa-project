@@ -20,7 +20,7 @@ const STATE_LABEL: Record<OverallStatus["state"], string> = {
 };
 
 const COVERAGE_TEXT: Record<DataCoverage, string> = {
-  complete: "All five demo indicators are reporting.",
+  complete: "All expected demo indicators are reporting.",
   partial: "Part of the demo data is missing; missing readings stay separate.",
   none: "No current demo data is available.",
 };

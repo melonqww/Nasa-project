@@ -1,11 +1,14 @@
 # Local architecture notes, research, planning, and agent work history.
 /Architecture/
+/.codex-remote-attachments/
 
 # Dependencies and build output
 node_modules/
 dist/
 dist-ssr/
 coverage/
+/.playwright-cli/
+/output/playwright/
 
 # Environment and local state
 .env

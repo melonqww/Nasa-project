@@ -1,28 +1,28 @@
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 
   /* Surfaces */
-  --bg: #060d15;
-  --bg-raised: #0b1622;
-  --surface: rgba(18, 32, 46, 0.72);
-  --surface-strong: #101f2d;
-  --border: rgba(160, 190, 215, 0.16);
-  --border-strong: rgba(160, 190, 215, 0.28);
+  --bg: #ffffff;
+  --bg-raised: #ffffff;
+  --surface: #f7f9fa;
+  --surface-strong: #f1f4f6;
+  --border: #e0e5e9;
+  --border-strong: #c9d2d9;
 
   /* Text */
-  --text: #e8f1f8;
-  --text-muted: #9fb2c4;
-  --text-faint: #72869a;
+  --text: #202c36;
+  --text-muted: #596974;
+  --text-faint: #687782;
   --text-ink: #08131a;
 
   /* Status palette (always paired with text and an icon) */
-  --state-clear: #5fd3bd;
+  --state-clear: #2d6c58;
   --state-clear-soft: rgba(95, 211, 189, 0.16);
-  --state-check: #f2c46d;
+  --state-check: #956215;
   --state-check-soft: rgba(242, 196, 109, 0.16);
-  --state-assist: #f27d6b;
+  --state-assist: #b24032;
   --state-assist-soft: rgba(242, 125, 107, 0.18);
-  --state-unknown: #9aa8b8;
+  --state-unknown: #687782;
   --state-unknown-soft: rgba(154, 168, 184, 0.16);
 
   /* Typography */
@@ -42,8 +42,8 @@
   --radius-lg: 24px;
   --radius-pill: 999px;
 
-  --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.32);
-  --shadow-panel: 0 -18px 48px rgba(0, 0, 0, 0.45);
+  --shadow-soft: 0 8px 28px rgba(29, 48, 61, 0.06);
+  --shadow-panel: 0 -12px 40px rgba(29, 48, 61, 0.1);
 
   --max-width: 1160px;
 }

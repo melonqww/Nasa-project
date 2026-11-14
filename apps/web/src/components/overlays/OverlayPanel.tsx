@@ -92,7 +92,7 @@ export function OverlayPanel({ id, title, children }: OverlayPanelProps) {
   }
 
   return (
-    <div className="overlay">
+    <div className="overlay" data-panel={id}>
       <div className="overlay__backdrop" onClick={closePanel} aria-hidden="true" />
 
       <div

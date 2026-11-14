@@ -11,7 +11,8 @@
  */
 
 /** Metric identifiers used by the first version of the interface. */
-export type MetricId = "heartRate" | "sleep" | "wellbeing" | "activity" | "spo2";
+export type MetricId = "heartRate" | "sleep" | "wellbeing" | "activity" | "spo2"
+  | "respiratoryRate" | "temperature" | "systolicPressure" | "diastolicPressure";
 
 /**
  * - `simulator` — reproducible synthetic scenario (demo default)
@@ -34,6 +35,8 @@ export interface TrendPoint {
   /** ISO 8601 timestamp. */
   at: string;
   value: number;
+  /** Source-declared cadence; lets charts distinguish daily samples from a faster stream. */
+  expectedIntervalSeconds?: number;
 }
 
 /** One metric as rendered by a mini-card and the details panel. */
@@ -100,6 +103,8 @@ export type RecommendationSeverity = "info" | "check" | "urgent";
  * Text is not generated at render time and is not a validated medical protocol.
  */
 export interface Recommendation {
+  /** Optional scope; unscoped guidance belongs to the overall status view. */
+  metricIds?: MetricId[];
   id: string;
   severity: RecommendationSeverity;
   title: string;
@@ -146,8 +151,36 @@ export interface DemoScenario {
 /** Lifecycle of the scenario clock. */
 export type DemoRunState = "idle" | "running" | "paused";
 
+export type DemoHistoryDays = 0 | 7 | 30 | 90;
+export type DemoState = "stable" | "check" | "urgent" | "missing";
+export interface HealthEvent {
+  id: string;
+  at: string;
+  kind: "data" | "state" | "report" | "plan";
+  title: string;
+  detail: string;
+}
+
+export interface WellbeingCheckIn { energy: number; reflection: string; rating: number; savedAt: string }
+export interface DailyPlanRecord {
+  date: string;
+  mode: "activity" | "recovery";
+  activeMinutes: number | null;
+  activeRecordedAt: string | null;
+  recoveryConfirmed: boolean;
+  measurementsReviewed: boolean;
+  checkIn: WellbeingCheckIn | null;
+}
+export interface DailyPlanState {
+  today: string;
+  records: DailyPlanRecord[];
+  storage: "browser" | "session";
+}
+
 /** Demo panel state. Kept separate from the crew-facing snapshot. */
 export interface DemoControlState {
+  historyDays: DemoHistoryDays | null;
+  demoState: DemoState | null;
   scenarioId: ScenarioId;
   runState: DemoRunState;
   speedFactor: number;
@@ -160,6 +193,8 @@ export interface DemoControlState {
  * separate demo control state.
  */
 export interface HealthUpdate {
+  events: HealthEvent[];
+  dailyPlan: DailyPlanState;
   snapshot: HealthSnapshot;
   control: DemoControlState;
 }
@@ -172,6 +207,14 @@ export interface HealthUpdate {
  * interface so the interface code does not change.
  */
 export interface HealthDataSource {
+  setDailyMode(mode: DailyPlanRecord["mode"]): void;
+  saveActiveMinutes(minutes: number): void;
+  confirmDailyTask(task: "recovery" | "measurements"): void;
+  saveCheckIn(input: Omit<WellbeingCheckIn, "savedAt">): void;
+  populateHistory(days: Exclude<DemoHistoryDays, 0>): void;
+  clearData(): void;
+  setDemoState(state: DemoState): void;
+  recordReportExport(recipient: "earth" | "crew"): void;
   readonly kind: DataSourceKind;
   listScenarios(): DemoScenario[];
   getUpdate(): HealthUpdate;

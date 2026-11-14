@@ -73,7 +73,7 @@ function pushTrend(
   valueAt: (seconds: number) => number,
 ): TrendPoint[] {
   const points: TrendPoint[] = [];
-  const start = Math.max(0, elapsedSeconds - stepSeconds * 15);
+  const start = elapsedSeconds - stepSeconds * 15;
   for (let t = start; t <= elapsedSeconds; t += stepSeconds) {
     points.push({ at: isoAt(t), value: valueAt(t) });
   }
@@ -132,12 +132,27 @@ export function buildSnapshot(
       updatedAt: isoAt(elapsedSeconds),
       dataCoverage: built.coverage,
     },
-    metrics: built.metrics,
+    metrics: [...built.metrics, ...additionalVitals(elapsedSeconds)],
     recommendations: built.recommendations,
     generatedAt: isoAt(elapsedSeconds),
     synthetic: true,
     speedFactor: 60,
   };
+}
+
+/** Fictional preloaded history. These are not live devices or clinical thresholds. */
+function additionalVitals(elapsed: number): MetricReading[] {
+  const values: { metric: MetricId; at: (seconds: number) => number; interval: number }[] = [
+    { metric: "respiratoryRate", at: t => 14 + wave(t, 38, 1), interval: 30 },
+    { metric: "temperature", at: t => Math.round((36.7 + Math.sin(t / 600) * .12) * 10) / 10, interval: 300 },
+    { metric: "systolicPressure", at: t => 118 + wave(t, 300, 4), interval: 300 },
+    { metric: "diastolicPressure", at: t => 76 + wave(t, 300, 2), interval: 300 },
+  ];
+  return values.map(({ metric, at, interval }) => {
+    const measured = Math.floor(elapsed / interval) * interval;
+    return reading({ metric, value: at(measured), status: "normal", measuredAt: isoAt(measured),
+      trend: pushTrend([], measured, interval, at) });
+  });
 }
 
 function buildScenario(
@@ -208,10 +223,11 @@ function nominalShift(elapsed: number): ScenarioBuild {
         ]
       : [
           {
-            id: "rec-routine",
+            id: "rec-wellbeing-check",
             severity: "info",
-            title: "Routine monitoring",
-            body: "All five demo metrics are reporting. No action is required right now.",
+            title: "Before your next work period",
+            body: "Review your last sleep period and record how you feel before the next work period.",
+            metricIds: ["sleep", "wellbeing"],
             source: DEMO_CONTENT_SOURCE,
             synthetic: true,
           },
@@ -221,7 +237,7 @@ function nominalShift(elapsed: number): ScenarioBuild {
     state: "clear",
     score: 92 + wave(elapsed, 18, 1),
     reasons: [
-      "All five demo metrics are current.",
+      "All expected demo metrics are current.",
       "No deviation detected by the prepared demo rules.",
     ],
     coverage: "complete",
@@ -281,7 +297,7 @@ function urgentEvent(elapsed: number): ScenarioBuild {
       state: "clear",
       score: 86,
       reasons: [
-        "All five demo metrics are current.",
+        "All expected demo metrics are current.",
         "The simulator event has not fired yet.",
       ],
       coverage: "complete",
@@ -291,7 +307,7 @@ function urgentEvent(elapsed: number): ScenarioBuild {
           id: "rec-routine",
           severity: "info",
           title: "Routine monitoring",
-          body: "All five demo metrics are reporting. The scenario event fires at 00:00:45.",
+          body: "All expected demo metrics are reporting. The scenario event fires at 00:00:45.",
           source: DEMO_CONTENT_SOURCE,
           synthetic: true,
         },
@@ -312,6 +328,7 @@ function urgentEvent(elapsed: number): ScenarioBuild {
     recommendations: [
       {
         id: "rec-assistance",
+        metricIds: ["heartRate", "spo2"],
         severity: "urgent",
         title: "Crew assistance",
         body: URGENT_ASSISTANCE_STEPS,
@@ -377,7 +394,7 @@ function sensorLoss(elapsed: number): ScenarioBuild {
       state: "clear",
       score: 90,
       reasons: [
-        "All five demo metrics are current.",
+        "All expected demo metrics are current.",
         "The SpO₂ sensor stops reporting at 00:00:40.",
       ],
       coverage: "complete",
@@ -387,7 +404,7 @@ function sensorLoss(elapsed: number): ScenarioBuild {
           id: "rec-routine",
           severity: "info",
           title: "Routine monitoring",
-          body: "All five demo metrics are reporting. The scenario drops SpO₂ at 00:00:40.",
+          body: "All expected demo metrics are reporting. The scenario drops SpO₂ at 00:00:40.",
           source: DEMO_CONTENT_SOURCE,
           synthetic: true,
         },
@@ -402,7 +419,7 @@ function sensorLoss(elapsed: number): ScenarioBuild {
       "SpO₂ has not reported for more than " +
         String(Math.max(1, elapsed - SENSOR_LOSS_AT)) +
         " s of scenario time.",
-      "The other four demo metrics are still current.",
+      "The remaining demo metrics are still current.",
       "Missing data is not a normal result.",
     ],
     coverage: "partial",
@@ -410,6 +427,7 @@ function sensorLoss(elapsed: number): ScenarioBuild {
     recommendations: [
       {
         id: "rec-sensor-check",
+        metricIds: ["spo2"],
         severity: "check",
         title: "Check the SpO₂ sensor",
         body: "Confirm the sensor is attached correctly and restart the reading. If the gap continues, record it in the log instead of assuming a normal value.",
