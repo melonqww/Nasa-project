@@ -1,0 +1,101 @@
+.metric-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-height: 128px;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
+}
+
+.metric-card[data-status="alert"] {
+  border-color: rgba(242, 125, 107, 0.5);
+  background: linear-gradient(180deg, var(--state-assist-soft), var(--surface) 62%);
+}
+
+.metric-card[data-status="watch"] {
+  border-color: rgba(242, 196, 109, 0.45);
+}
+
+.metric-card[data-status="unavailable"] {
+  border-style: dashed;
+  border-color: var(--border-strong);
+  background: rgba(14, 24, 34, 0.55);
+}
+
+.metric-card__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.metric-card__label {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.metric-card__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+.metric-card__status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--state-clear);
+}
+
+.metric-card__status[data-status="watch"] .metric-card__status-dot {
+  background: var(--state-check);
+}
+
+.metric-card__status[data-status="alert"] .metric-card__status-dot {
+  background: var(--state-assist);
+}
+
+.metric-card__status[data-status="unavailable"] .metric-card__status-dot {
+  background: var(--state-unknown);
+}
+
+.metric-card__value {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.metric-card__number {
+  font-size: 30px;
+  font-weight: 650;
+  line-height: 1;
+}
+
+.metric-card__unit {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.metric-card__empty {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-faint);
+}
+
+.metric-card__meta {
+  display: flex;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-faint);
+}

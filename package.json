@@ -1,0 +1,20 @@
+{
+  "name": "astronaut-health-monitor",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Interactive astronaut health monitoring demo (synthetic data, no cloud dependency).",
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "npm run dev -w @ahm/web",
+    "build": "npm run build -w @ahm/web",
+    "preview": "npm run preview -w @ahm/web",
+    "typecheck": "npm run typecheck -w @ahm/web"
+  }
+}

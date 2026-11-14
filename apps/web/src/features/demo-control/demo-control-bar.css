@@ -1,0 +1,127 @@
+.demo-control {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-5);
+  margin-top: var(--space-5);
+  padding: var(--space-4);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  background: rgba(9, 18, 27, 0.82);
+}
+
+.demo-control__eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.demo-control__state {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.demo-control__state-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--state-unknown);
+}
+
+.demo-control__state-dot[data-run-state="running"] {
+  background: var(--state-clear);
+  box-shadow: 0 0 0 3px var(--state-clear-soft);
+}
+
+.demo-control__state-dot[data-run-state="paused"] {
+  background: var(--state-check);
+}
+
+.demo-control__clock {
+  font-family: var(--font-mono);
+  color: var(--text);
+}
+
+.demo-control__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+.demo-control__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.demo-control__label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.demo-control__select {
+  min-width: 230px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-strong);
+  color: var(--text);
+}
+
+.demo-control__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.demo-control__button {
+  padding: 8px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 13px;
+  font-weight: 600;
+  transition: background 140ms ease;
+}
+
+.demo-control__button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.demo-control__button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.demo-control__button--primary {
+  border-color: rgba(95, 211, 189, 0.55);
+  background: rgba(95, 211, 189, 0.16);
+  color: #c9f5ec;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .demo-control__button {
+    transition: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .demo-control__select {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .demo-control__field {
+    width: 100%;
+  }
+}

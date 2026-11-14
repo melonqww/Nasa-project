@@ -1,0 +1,49 @@
+:root {
+  color-scheme: dark;
+
+  /* Surfaces */
+  --bg: #060d15;
+  --bg-raised: #0b1622;
+  --surface: rgba(18, 32, 46, 0.72);
+  --surface-strong: #101f2d;
+  --border: rgba(160, 190, 215, 0.16);
+  --border-strong: rgba(160, 190, 215, 0.28);
+
+  /* Text */
+  --text: #e8f1f8;
+  --text-muted: #9fb2c4;
+  --text-faint: #72869a;
+  --text-ink: #08131a;
+
+  /* Status palette (always paired with text and an icon) */
+  --state-clear: #5fd3bd;
+  --state-clear-soft: rgba(95, 211, 189, 0.16);
+  --state-check: #f2c46d;
+  --state-check-soft: rgba(242, 196, 109, 0.16);
+  --state-assist: #f27d6b;
+  --state-assist-soft: rgba(242, 125, 107, 0.18);
+  --state-unknown: #9aa8b8;
+  --state-unknown-soft: rgba(154, 168, 184, 0.16);
+
+  /* Typography */
+  --font-ui: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Cascadia Mono", "Consolas", ui-monospace, monospace;
+
+  /* Spacing and shape */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-pill: 999px;
+
+  --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.32);
+  --shadow-panel: 0 -18px 48px rgba(0, 0, 0, 0.45);
+
+  --max-width: 1160px;
+}

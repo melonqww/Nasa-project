@@ -1,0 +1,130 @@
+.ball-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: var(--space-5) var(--space-4);
+}
+
+.ball {
+  position: relative;
+  width: clamp(240px, 34vw, 360px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 58%, var(--ball-core), var(--ball-edge) 72%),
+    var(--ball-edge);
+  box-shadow:
+    inset 0 -18px 36px rgba(8, 20, 28, 0.22),
+    inset 0 14px 26px rgba(255, 255, 255, 0.35),
+    0 26px 70px var(--ball-glow);
+  animation: ball-breathe 7s ease-in-out infinite;
+}
+
+.ball__sheen {
+  position: absolute;
+  inset: 8% 10% 46% 8%;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at 40% 30%,
+    rgba(255, 255, 255, 0.55),
+    rgba(255, 255, 255, 0) 68%
+  );
+  filter: blur(2px);
+}
+
+.ball__highlight {
+  position: absolute;
+  inset: auto 18% 10% 18%;
+  height: 22%;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at 50% 100%,
+    rgba(255, 255, 255, 0.28),
+    rgba(255, 255, 255, 0) 70%
+  );
+}
+
+.ball[data-state="clear"] {
+  --ball-core: #9fe9da;
+  --ball-edge: #43b9a4;
+  --ball-glow: rgba(95, 211, 189, 0.32);
+}
+
+.ball[data-state="check"] {
+  --ball-core: #ffe3ab;
+  --ball-edge: #ddab52;
+  --ball-glow: rgba(242, 196, 109, 0.32);
+}
+
+.ball[data-state="assist"] {
+  --ball-core: #ffc2b6;
+  --ball-edge: #d9604c;
+  --ball-glow: rgba(242, 125, 107, 0.34);
+}
+
+.ball[data-state="insufficient"] {
+  --ball-core: #d5dde6;
+  --ball-edge: #8294a6;
+  --ball-glow: rgba(154, 168, 184, 0.28);
+}
+
+.ball__headline {
+  position: absolute;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 82%;
+  margin-top: 2px;
+  padding: 10px 18px;
+  border-radius: var(--radius-pill);
+  background: rgba(6, 16, 24, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: var(--text);
+  font-size: clamp(15px, 1.4vw, 18px);
+  font-weight: 600;
+  text-align: center;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.28);
+}
+
+.ball__status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--state-unknown);
+  flex: none;
+}
+
+.ball__status-dot[data-state="clear"] {
+  background: var(--state-clear);
+}
+
+.ball__status-dot[data-state="check"] {
+  background: var(--state-check);
+}
+
+.ball__status-dot[data-state="assist"] {
+  background: var(--state-assist);
+}
+
+@keyframes ball-breathe {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-6px) scale(1.012);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ball {
+    animation: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .ball {
+    width: min(68vw, 300px);
+  }
+}
