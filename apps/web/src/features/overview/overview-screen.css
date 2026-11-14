@@ -12,34 +12,42 @@
 }
 
 .layout {
-  width: min(100%, 1040px);
+  width: min(100%, 1200px);
   margin: 0 auto;
-  padding: 200px 0 160px;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-5);
-}
-
-.layout__bar {
-  width: 100%;
-}
-
-.ball-layout {
-  display: grid;
-  grid-template-columns: minmax(150px, 190px) minmax(0, 1fr) minmax(150px, 190px);
-  gap: var(--space-4);
-  align-items: center;
-}
-
-.ball-layout__side {
+  padding: 210px 0 var(--space-7);
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
 }
 
-.ball-layout__center {
+.layout__bar {
+  width: min(100%, 860px);
+  margin: 0 auto;
+}
+
+.stage {
   display: grid;
   place-items: center;
+  padding: var(--space-4) 0 var(--space-5);
+}
+
+.orbit {
+  --ball-size: clamp(180px, 34vw, 440px);
+  --orb-size: clamp(64px, 8vw, 112px);
+  --orbit-radius: calc(var(--ball-size) / 2 + var(--orb-size) * 0.32);
+  --orbit-stage: calc(var(--ball-size) + var(--orb-size) * 1.65);
+
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--orbit-stage);
+  height: var(--orbit-stage);
+}
+
+.orbit > .metric-orb {
+  position: absolute;
+  left: calc(50% + var(--orbit-radius) * var(--orb-x) - var(--orb-size) / 2);
+  top: calc(50% + var(--orbit-radius) * var(--orb-y) - var(--orb-size) / 2);
 }
 
 .demo-note {
@@ -48,40 +56,14 @@
   color: var(--text-faint);
 }
 
-.panel-stack {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 12px;
-  width: min(1000px, calc(100% - 24px));
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  pointer-events: none;
-}
-
-.panel-empty {
-  color: var(--text-muted);
-}
-
 .app-loading {
   padding: var(--space-6);
   color: var(--text-muted);
 }
 
-@media (max-width: 1040px) {
-  .ball-layout {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .ball-layout__center {
-    grid-column: 1 / -1;
-    order: -1;
-  }
-
-  .ball-layout__side {
-    display: contents;
+@media (max-width: 1000px) {
+  .layout {
+    padding-top: var(--space-4);
   }
 }
 
@@ -99,7 +81,12 @@
 }
 
 @media (max-width: 620px) {
-  .ball-layout {
-    grid-template-columns: minmax(0, 1fr);
+  .orbit {
+    --ball-size: clamp(170px, 52vw, 300px);
+    --orb-size: clamp(62px, 18vw, 92px);
+  }
+
+  .stage {
+    padding: var(--space-3) 0 var(--space-4);
   }
 }

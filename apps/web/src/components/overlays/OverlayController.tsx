@@ -7,67 +7,40 @@ import {
   type ReactNode,
 } from "react";
 
-export type PanelId = "details" | "communication";
-export type PanelMode = "collapsed" | "peek" | "expanded";
-
-interface OpenPanel {
-  id: PanelId;
-  mode: Exclude<PanelMode, "collapsed">;
-}
+export type PanelId = "health";
 
 interface OverlayContextValue {
-  open: OpenPanel | null;
-  modeOf: (id: PanelId) => PanelMode;
-  showPeek: (id: PanelId) => void;
-  expand: (id: PanelId) => void;
-  collapse: () => void;
-  /** Handle click: peek first when available, then expanded, then collapsed. */
-  toggle: (id: PanelId, hasPeek: boolean) => void;
+  activePanel: PanelId | null;
+  isOpen: (id: PanelId) => boolean;
+  openPanel: (id: PanelId) => void;
+  closePanel: () => void;
 }
 
 const OverlayContext = createContext<OverlayContextValue | null>(null);
 
 /**
- * Coordinates all expandable bottom panels. Only one panel can be open at a
- * time, so layers never stack into nested modals.
+ * Coordinates the single large overlay used by the crew interface. Only one
+ * overlay can be open at a time, so layers never stack into nested modals.
  */
 export function OverlayProvider({ children }: { children: ReactNode }) {
-  const [open, setOpen] = useState<OpenPanel | null>(null);
+  const [activePanel, setActivePanel] = useState<PanelId | null>(null);
 
-  const showPeek = useCallback((id: PanelId) => {
-    setOpen({ id, mode: "peek" });
+  const openPanel = useCallback((id: PanelId) => {
+    setActivePanel(id);
   }, []);
 
-  const expand = useCallback((id: PanelId) => {
-    setOpen({ id, mode: "expanded" });
-  }, []);
-
-  const collapse = useCallback(() => {
-    setOpen(null);
-  }, []);
-
-  const toggle = useCallback((id: PanelId, hasPeek: boolean) => {
-    setOpen((current) => {
-      if (current?.id !== id) {
-        return { id, mode: hasPeek ? "peek" : "expanded" };
-      }
-      if (current.mode === "expanded") {
-        return null;
-      }
-      return { id, mode: "expanded" };
-    });
+  const closePanel = useCallback(() => {
+    setActivePanel(null);
   }, []);
 
   const value = useMemo<OverlayContextValue>(
     () => ({
-      open,
-      modeOf: (id) => (open?.id === id ? open.mode : "collapsed"),
-      showPeek,
-      expand,
-      collapse,
-      toggle,
+      activePanel,
+      isOpen: (id) => activePanel === id,
+      openPanel,
+      closePanel,
     }),
-    [open, showPeek, expand, collapse, toggle],
+    [activePanel, openPanel, closePanel],
   );
 
   return <OverlayContext.Provider value={value}>{children}</OverlayContext.Provider>;

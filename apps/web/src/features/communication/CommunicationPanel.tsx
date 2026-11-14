@@ -1,21 +1,43 @@
-import { BottomPanel } from "../../components/overlays";
+import { useState } from "react";
 
 import "./communication-panel.css";
 
 /**
- * Communication dock. Only the collapsed handle and an honest placeholder are
- * present in this stage; report preview and sending are connected later.
+ * Left-side communication block. It stays visible as a compact card and
+ * expands in place. Report preview and sending are not connected in this stage,
+ * so the block states that plainly and claims no result.
  */
 export function CommunicationPanel() {
+  const [open, setOpen] = useState(false);
+
   return (
-    <BottomPanel id="communication" title="Communication">
-      <div className="communication-stub">
-        <p>
-          Report preview and sending are not connected in this stage. No message is queued or
-          sent, and no result is claimed.
-        </p>
-        <p className="communication-stub__note">Planned: preview, send and automatic sending.</p>
-      </div>
-    </BottomPanel>
+    <aside className="communication" data-open={open} aria-label="Communication">
+      <button
+        type="button"
+        className="communication__toggle"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+      >
+        <span className="communication__dot" aria-hidden="true" />
+        <span className="communication__title">Communication</span>
+        <span className="communication__state">Standby</span>
+        <span className="communication__action" aria-hidden="true">
+          {open ? "Hide" : "Open"}
+        </span>
+      </button>
+
+      {open && (
+        <div className="communication__body">
+          <p className="communication__note">
+            Report preview and sending are not connected in this stage. No message is queued or
+            sent, and no result is claimed.
+          </p>
+          <p className="communication__planned">
+            Planned: report preview, sending and automatic sending. Urgent guidance stays visible
+            without opening this block.
+          </p>
+        </div>
+      )}
+    </aside>
   );
 }
