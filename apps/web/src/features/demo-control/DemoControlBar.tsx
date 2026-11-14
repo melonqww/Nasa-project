@@ -64,7 +64,7 @@ export function DemoControlBar({
 
         <div className="demo-control__buttons">
           <button type="button" className="demo-control__button demo-control__button--primary" onClick={() => onRun(control.scenarioId)}>
-            Start / restart
+            Start
           </button>
           {running ? (
             <button type="button" className="demo-control__button" onClick={onPause}>

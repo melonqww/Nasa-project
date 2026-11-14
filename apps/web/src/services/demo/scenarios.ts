@@ -46,6 +46,26 @@ function wave(seconds: number, period: number, amplitude: number): number {
   return Math.round(amplitude * Math.sin(seconds / period));
 }
 
+/**
+ * Plain-language description of the demo health index band.
+ * Thresholds are part of the prepared demo material, not a medical rule.
+ */
+export function describeScore(score: number): string {
+  if (score < 25) {
+    return "Critical — get help now";
+  }
+  if (score < 50) {
+    return "Contact a medic or assistant";
+  }
+  if (score < 75) {
+    return "Some problems detected";
+  }
+  if (score < 90) {
+    return "Satisfactory";
+  }
+  return "All good";
+}
+
 function pushTrend(
   trend: TrendPoint[],
   elapsedSeconds: number,
@@ -90,7 +110,7 @@ function reading(input: ReadingInput): MetricReading {
 
 interface ScenarioBuild {
   state: OverallState;
-  headline: string;
+  score: number;
   reasons: string[];
   coverage: DataCoverage;
   metrics: MetricReading[];
@@ -106,7 +126,8 @@ export function buildSnapshot(
     mission: MISSION,
     overall: {
       state: built.state,
-      headline: built.headline,
+      healthScore: built.score,
+      scoreLabel: describeScore(built.score),
       reasons: built.reasons,
       updatedAt: isoAt(elapsedSeconds),
       dataCoverage: built.coverage,
@@ -198,7 +219,7 @@ function nominalShift(elapsed: number): ScenarioBuild {
 
   return {
     state: "clear",
-    headline: "No new warnings",
+    score: 92 + wave(elapsed, 18, 1),
     reasons: [
       "All five demo metrics are current.",
       "No deviation detected by the prepared demo rules.",
@@ -258,7 +279,7 @@ function urgentEvent(elapsed: number): ScenarioBuild {
   if (!active) {
     return {
       state: "clear",
-      headline: "No new warnings",
+      score: 86,
       reasons: [
         "All five demo metrics are current.",
         "The simulator event has not fired yet.",
@@ -280,7 +301,7 @@ function urgentEvent(elapsed: number): ScenarioBuild {
 
   return {
     state: "assist",
-    headline: "Assistance needed",
+    score: 18,
     reasons: [
       "Heart rate rose sharply in the synthetic stream.",
       "SpO₂ dropped below the demo threshold.",
@@ -354,7 +375,7 @@ function sensorLoss(elapsed: number): ScenarioBuild {
   if (!lost) {
     return {
       state: "clear",
-      headline: "No new warnings",
+      score: 90,
       reasons: [
         "All five demo metrics are current.",
         "The SpO₂ sensor stops reporting at 00:00:40.",
@@ -376,7 +397,7 @@ function sensorLoss(elapsed: number): ScenarioBuild {
 
   return {
     state: "insufficient",
-    headline: "Data incomplete",
+    score: 66,
     reasons: [
       "SpO₂ has not reported for more than " +
         String(Math.max(1, elapsed - SENSOR_LOSS_AT)) +

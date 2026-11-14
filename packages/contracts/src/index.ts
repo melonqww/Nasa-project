@@ -75,8 +75,16 @@ export type DataCoverage = "complete" | "partial" | "none";
 /** Aggregated status rendered on and around the ball. */
 export interface OverallStatus {
   state: OverallState;
-  /** One short phrase for the ball, e.g. "Needs a check". */
-  headline: string;
+  /**
+   * Demo health index from 0 to 100, produced by the data source.
+   * It is a prepared demo index, not a medical score or diagnosis.
+   */
+  healthScore: number;
+  /**
+   * Plain-language description of the index band, supplied by the data source,
+   * e.g. "All good", "Some problems detected", "Critical — get help now".
+   */
+  scoreLabel: string;
   /** Concrete reasons supporting the state. */
   reasons: string[];
   /** ISO 8601 timestamp of the evaluation. */

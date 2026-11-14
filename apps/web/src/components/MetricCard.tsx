@@ -1,4 +1,6 @@
-import type { MetricReading } from "@ahm/contracts";
+import type { MetricId, MetricReading } from "@ahm/contracts";
+
+import { formatTime } from "../lib/format";
 
 import "./metric-card.css";
 
@@ -9,39 +11,37 @@ const STATUS_LABEL: Record<MetricReading["status"], string> = {
   unavailable: "No data",
 };
 
-function formatTime(iso: string | null): string {
-  if (!iso) {
-    return "no reading";
-  }
-  return new Intl.DateTimeFormat("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).format(new Date(iso));
-}
-
 interface MetricCardProps {
   reading: MetricReading;
+  selected: boolean;
+  onSelect: (metric: MetricId) => void;
 }
 
 /**
- * Compact metric tile. Interaction (selection, details) is added in the
- * measurements stage; the tile itself only presents the received state.
+ * Compact metric tile. A click selects the metric and shows the compact plaque
+ * above the shared bottom panel; details are opened from that plaque.
  */
-export function MetricCard({ reading }: MetricCardProps) {
+export function MetricCard({ reading, selected, onSelect }: MetricCardProps) {
   const hasValue = reading.value !== null;
 
   return (
-    <article className="metric-card" data-status={reading.status}>
-      <header className="metric-card__head">
-        <h3 className="metric-card__label">{reading.label}</h3>
+    <button
+      type="button"
+      className="metric-card"
+      data-status={reading.status}
+      data-selected={selected}
+      aria-pressed={selected}
+      onClick={() => onSelect(reading.metric)}
+    >
+      <span className="metric-card__head">
+        <span className="metric-card__label">{reading.label}</span>
         <span className="metric-card__status" data-status={reading.status}>
           <span className="metric-card__status-dot" aria-hidden="true" />
           {STATUS_LABEL[reading.status]}
         </span>
-      </header>
+      </span>
 
-      <p className="metric-card__value">
+      <span className="metric-card__value">
         {hasValue ? (
           <>
             <span className="metric-card__number">{reading.value}</span>
@@ -50,15 +50,15 @@ export function MetricCard({ reading }: MetricCardProps) {
         ) : (
           <span className="metric-card__empty">No data</span>
         )}
-      </p>
+      </span>
 
-      <p className="metric-card__meta">
+      <span className="metric-card__meta">
         <time dateTime={reading.measuredAt ?? undefined} title={reading.measuredAt ?? undefined}>
           {formatTime(reading.measuredAt)}
         </time>
         <span aria-hidden="true">·</span>
         <span>synthetic</span>
-      </p>
-    </article>
+      </span>
+    </button>
   );
 }

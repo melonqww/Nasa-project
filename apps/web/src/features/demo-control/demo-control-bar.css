@@ -1,18 +1,22 @@
 .demo-control {
+  position: fixed;
+  top: var(--space-4);
+  left: var(--space-4);
+  z-index: 60;
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3) var(--space-5);
-  margin-top: var(--space-5);
-  padding: var(--space-4);
+  flex-direction: column;
+  gap: var(--space-2);
+  width: min(320px, calc(100vw - 32px));
+  padding: 12px 14px;
   border: 1px dashed var(--border-strong);
   border-radius: var(--radius-md);
-  background: rgba(9, 18, 27, 0.82);
+  background: rgba(8, 17, 26, 0.94);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-soft);
 }
 
 .demo-control__eyebrow {
-  font-size: 11px;
+  font-size: 10px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-faint);
@@ -22,15 +26,15 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-2);
-  margin-top: 6px;
-  font-size: 13px;
+  gap: 6px;
+  margin-top: 3px;
+  font-size: 12px;
   color: var(--text-muted);
 }
 
 .demo-control__state-dot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: var(--state-unknown);
 }
@@ -51,46 +55,48 @@
 
 .demo-control__actions {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: var(--space-3);
+  flex-direction: column;
+  gap: var(--space-2);
 }
 
 .demo-control__field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
 .demo-control__label {
-  font-size: 11px;
+  font-size: 10px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-faint);
 }
 
 .demo-control__select {
-  min-width: 230px;
-  padding: 8px 10px;
+  width: 100%;
+  min-width: 0;
+  padding: 7px 8px;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
   background: var(--surface-strong);
   color: var(--text);
+  font-size: 13px;
 }
 
 .demo-control__buttons {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
+  gap: 6px;
 }
 
 .demo-control__button {
-  padding: 8px 14px;
+  flex: 1;
+  padding: 7px 8px;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.04);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
+  white-space: nowrap;
   transition: background 140ms ease;
 }
 
@@ -115,13 +121,10 @@
   }
 }
 
-@media (max-width: 720px) {
-  .demo-control__select {
-    min-width: 0;
+@media (max-width: 900px) {
+  .demo-control {
+    position: static;
     width: 100%;
-  }
-
-  .demo-control__field {
-    width: 100%;
+    margin-bottom: var(--space-2);
   }
 }

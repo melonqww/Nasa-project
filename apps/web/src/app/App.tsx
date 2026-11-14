@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { HealthDataSource, HealthUpdate } from "@ahm/contracts";
 
+import { OverlayProvider } from "../components/overlays";
 import { OverviewScreen } from "../features/overview/OverviewScreen";
 import { createHealthDataSource } from "../services/demo";
 
@@ -19,13 +20,15 @@ export function App() {
   }
 
   return (
-    <OverviewScreen
-      update={update}
-      scenarios={source.listScenarios()}
-      onRun={(scenarioId) => source.runScenario(scenarioId)}
-      onPause={() => source.pause()}
-      onResume={() => source.resume()}
-      onReset={() => source.reset()}
-    />
+    <OverlayProvider>
+      <OverviewScreen
+        update={update}
+        scenarios={source.listScenarios()}
+        onRun={(scenarioId) => source.runScenario(scenarioId)}
+        onPause={() => source.pause()}
+        onResume={() => source.resume()}
+        onReset={() => source.reset()}
+      />
+    </OverlayProvider>
   );
 }

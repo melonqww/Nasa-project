@@ -1,27 +1,16 @@
-import type { DemoScenario, HealthUpdate, MetricReading, ScenarioId } from "@ahm/contracts";
+import { useState } from "react";
+import type { DemoScenario, HealthUpdate, MetricId, MetricReading, ScenarioId } from "@ahm/contracts";
 
 import { MetricCard } from "../../components/MetricCard";
 import { RecommendationBar } from "../../components/RecommendationBar";
 import { SimulationBadge } from "../../components/SimulationBadge";
 import { StatusBall } from "../../components/StatusBall";
+import { BottomPanel, useOverlayController } from "../../components/overlays";
+import { CommunicationPanel } from "../communication/CommunicationPanel";
 import { DemoControlBar } from "../demo-control/DemoControlBar";
+import { MetricDetails, MetricPlaque } from "../measurements/MetricSummary";
 
 import "./overview-screen.css";
-
-const COVERAGE_LABEL = {
-  complete: "All expected demo metrics are reporting.",
-  partial: "Part of the expected data is missing.",
-  none: "No current measurements are available.",
-} as const;
-
-function formatUpdated(iso: string): string {
-  return new Intl.DateTimeFormat("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  }).format(new Date(iso));
-}
 
 interface OverviewScreenProps {
   update: HealthUpdate;
@@ -33,9 +22,8 @@ interface OverviewScreenProps {
 }
 
 /**
- * Crew-facing main screen: header, guidance, jelly ball, short summary and
- * the five metric tiles. Panels and detailed views are added in the next
- * interface stages.
+ * Crew-facing main screen: guidance row, centered jelly ball with the five
+ * metric tiles beside it and the shared bottom panels.
  */
 export function OverviewScreen({
   update,
@@ -46,7 +34,28 @@ export function OverviewScreen({
   onReset,
 }: OverviewScreenProps) {
   const { snapshot, control } = update;
-  const { mission, overall, metrics, recommendations } = snapshot;
+  const { overall, metrics, recommendations } = snapshot;
+
+  const [selectedMetric, setSelectedMetric] = useState<MetricId | null>(null);
+  const { modeOf, showPeek } = useOverlayController();
+
+  const selectedReading = metrics.find((reading) => reading.metric === selectedMetric) ?? null;
+
+  const handleSelect = (metric: MetricId) => {
+    setSelectedMetric(metric);
+    if (modeOf("details") !== "expanded") {
+      showPeek("details");
+    }
+  };
+
+  const renderCard = (reading: MetricReading) => (
+    <MetricCard
+      key={reading.metric}
+      reading={reading}
+      selected={reading.metric === selectedMetric}
+      onSelect={handleSelect}
+    />
+  );
 
   return (
     <div className="app-shell">
@@ -54,66 +63,9 @@ export function OverviewScreen({
         Skip to main content
       </a>
 
-      <header className="topbar">
-        <div className="topbar__identity">
-          <p className="topbar__eyebrow">Crew health monitor</p>
-          <h1 className="topbar__name">{mission.astronautName}</h1>
-          <p className="topbar__context">
-            {mission.astronautRole} · {mission.missionPhase} · {mission.environment}
-          </p>
-        </div>
-        <div className="topbar__meta">
-          <SimulationBadge />
-          <p className="topbar__timeline">{mission.timelineLabel}</p>
-        </div>
-      </header>
-
-      <main id="main" className="layout">
-        <RecommendationBar recommendations={recommendations} />
-
-        <section className="main-grid" aria-label="Current status">
-          <div className="main-grid__ball">
-            <StatusBall state={overall.state} headline={overall.headline} />
-          </div>
-
-          <aside className="summary" aria-labelledby="summary-title">
-            <h2 className="summary__title" id="summary-title">
-              Why this state
-            </h2>
-            <ul className="summary__reasons">
-              {overall.reasons.map((reason) => (
-                <li key={reason}>{reason}</li>
-              ))}
-            </ul>
-            <div className="summary__facts">
-              <p className="summary__fact">
-                <span className="summary__fact-label">Data coverage</span>
-                <span>{COVERAGE_LABEL[overall.dataCoverage]}</span>
-              </p>
-              <p className="summary__fact">
-                <span className="summary__fact-label">Evaluated</span>
-                <span>{formatUpdated(overall.updatedAt)} · demo clock</span>
-              </p>
-            </div>
-            <p className="summary__note">
-              The ball shows the action priority from the demo rules. It is not a health score and
-              a missing reading is never shown as normal.
-            </p>
-          </aside>
-        </section>
-
-        <section className="metrics" aria-label="Metrics">
-          <div className="metrics__head">
-            <h2 className="metrics__title">Metrics</h2>
-            <p className="metrics__hint">Synthetic values · updated by the scenario clock</p>
-          </div>
-          <div className="metrics__grid">
-            {metrics.map((reading: MetricReading) => (
-              <MetricCard key={reading.metric} reading={reading} />
-            ))}
-          </div>
-        </section>
-      </main>
+      <div className="site-badge">
+        <SimulationBadge />
+      </div>
 
       <DemoControlBar
         control={control}
@@ -123,6 +75,43 @@ export function OverviewScreen({
         onResume={onResume}
         onReset={onReset}
       />
+
+      <main id="main" className="layout">
+        <div className="layout__bar">
+          <RecommendationBar recommendations={recommendations} />
+        </div>
+
+        <section className="ball-layout" aria-label="Current health index">
+          <div className="ball-layout__side">{metrics.slice(0, 2).map(renderCard)}</div>
+          <div className="ball-layout__center">
+            <StatusBall
+              state={overall.state}
+              score={overall.healthScore}
+              label={overall.scoreLabel}
+            />
+          </div>
+          <div className="ball-layout__side">{metrics.slice(2).map(renderCard)}</div>
+        </section>
+
+        <p className="demo-note">
+          Demo health index (0–100) calculated from synthetic data · not a diagnosis
+        </p>
+
+        <div className="panel-stack">
+          <BottomPanel
+            id="details"
+            title={selectedReading ? `${selectedReading.label} details` : "Metric details"}
+            peek={selectedReading ? <MetricPlaque reading={selectedReading} /> : undefined}
+          >
+            {selectedReading ? (
+              <MetricDetails reading={selectedReading} />
+            ) : (
+              <p className="panel-empty">Select a metric to see its details.</p>
+            )}
+          </BottomPanel>
+          <CommunicationPanel />
+        </div>
+      </main>
     </div>
   );
 }

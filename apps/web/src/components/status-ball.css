@@ -2,21 +2,21 @@
   position: relative;
   display: grid;
   place-items: center;
-  padding: var(--space-5) var(--space-4);
+  padding: var(--space-4);
 }
 
 .ball {
   position: relative;
-  width: clamp(240px, 34vw, 360px);
+  width: clamp(280px, 38vw, 420px);
   aspect-ratio: 1;
   border-radius: 50%;
   background:
     radial-gradient(circle at 50% 58%, var(--ball-core), var(--ball-edge) 72%),
     var(--ball-edge);
   box-shadow:
-    inset 0 -18px 36px rgba(8, 20, 28, 0.22),
-    inset 0 14px 26px rgba(255, 255, 255, 0.35),
-    0 26px 70px var(--ball-glow);
+    inset 0 -22px 44px rgba(8, 20, 28, 0.2),
+    inset 0 16px 30px rgba(255, 255, 255, 0.4),
+    0 30px 90px var(--ball-glow);
   animation: ball-breathe 7s ease-in-out infinite;
 }
 
@@ -68,43 +68,41 @@
   --ball-glow: rgba(154, 168, 184, 0.28);
 }
 
-.ball__headline {
+.ball__readout {
   position: absolute;
-  z-index: 2;
-  display: inline-flex;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: var(--space-2);
-  max-width: 82%;
-  margin-top: 2px;
-  padding: 10px 18px;
-  border-radius: var(--radius-pill);
-  background: rgba(6, 16, 24, 0.82);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  color: var(--text);
-  font-size: clamp(15px, 1.4vw, 18px);
-  font-weight: 600;
+  justify-content: center;
+  gap: 2px;
+  padding: 0 20%;
   text-align: center;
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.28);
+  color: #05231d;
+  pointer-events: none;
 }
 
-.ball__status-dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--state-unknown);
-  flex: none;
+.ball__score-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(5, 35, 29, 0.6);
 }
 
-.ball__status-dot[data-state="clear"] {
-  background: var(--state-clear);
+.ball__score {
+  font-size: clamp(64px, 8.4vw, 96px);
+  font-weight: 700;
+  line-height: 0.95;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
 }
 
-.ball__status-dot[data-state="check"] {
-  background: var(--state-check);
-}
-
-.ball__status-dot[data-state="assist"] {
-  background: var(--state-assist);
+.ball__description {
+  max-width: 16ch;
+  font-size: clamp(14px, 1.4vw, 17px);
+  font-weight: 650;
+  line-height: 1.3;
 }
 
 @keyframes ball-breathe {
@@ -125,6 +123,6 @@
 
 @media (max-width: 720px) {
   .ball {
-    width: min(68vw, 300px);
+    width: min(76vw, 320px);
   }
 }

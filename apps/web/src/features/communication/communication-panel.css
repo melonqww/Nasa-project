@@ -1,0 +1,12 @@
+.communication-stub {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-width: 62ch;
+  color: var(--text-muted);
+}
+
+.communication-stub__note {
+  font-size: 13px;
+  color: var(--text-faint);
+}
