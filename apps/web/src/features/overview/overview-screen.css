@@ -1,4 +1,4 @@
-.app-shell { --status: #4e8069; min-height:100svh; background: radial-gradient(ellipse at 50% 37%,#f1f5f1 0%,#eef1f3 48%,#e9edf0 100%); color:#202a32; display:flex; flex-direction:column; }
+.app-shell { --status: #4e8069; min-height:100svh; background: radial-gradient(ellipse at 50% 34%,#cdd8e2 0%,#c2cfdb 52%,#b5c3d3 100%); color:#202a32; display:flex; flex-direction:column; }
 .app-shell[data-state="check"] { --status:#987027; }
 .app-shell[data-state="assist"] { --status:#b94b3d; }
 .app-shell[data-state="insufficient"] { --status:#72828e; }
@@ -188,9 +188,6 @@
 .report-journal .event-journal { padding-top:20px; }
 .report-journal .event-journal > h2 { font-size:21px; }
 .measurement-picker { display:none; }
-.status-page,.workspace-page { animation:workspace-enter 240ms ease-out; }
-.metric-details { animation:workspace-enter 220ms ease-out; }
-.metric-tray__reading { animation:value-enter 220ms ease-out; }
 .summary-link svg { transition:transform 180ms; }
 .summary-link:hover svg { transform:translateX(3px); }
 @keyframes workspace-enter { from { opacity:.45; } to { opacity:1; } }

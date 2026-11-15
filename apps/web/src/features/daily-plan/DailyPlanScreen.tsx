@@ -15,14 +15,14 @@ function CheckInForm({ initial, onSave, onCancel }: { initial: WellbeingCheckIn 
   const submit = (event: FormEvent) => { event.preventDefault(); if (step === 2 && energy !== null && rating !== null) onSave({ energy, reflection, rating }); };
   return <form className="check-in" onSubmit={submit}>
     <p className="check-in__step">Question {step + 1} of 3 · today</p>
-    {step === 0 ? <fieldset><legend>How was your energy today?</legend><div className="check-in__ratings" role="group" aria-label="Energy rating">
+    <div className="check-in__question" key={step}>{step === 0 ? <fieldset><legend>How was your energy today?</legend><div className="check-in__ratings" role="group" aria-label="Energy rating">
       {[1,2,3,4,5].map(value => <button key={value} type="button" aria-pressed={energy === value} onClick={() => setEnergy(value)}>{value}</button>)}
     </div><p className="check-in__scale"><span>Very low</span><span>Very high</span></p></fieldset> : step === 1 ? <div>
       <label htmlFor="check-in-note">What went well or felt difficult today?</label><textarea id="check-in-note" rows={3} maxLength={400} value={reflection} onChange={event => setReflection(event.target.value)} placeholder="A short note, if you want to add one" />
       <p className="check-in__step">Optional · {reflection.length}/400</p>
     </div> : <fieldset><legend>How would you rate your overall wellbeing today?</legend><div className="check-in__ratings check-in__ratings--ten" role="group" aria-label="Wellbeing rating">
       {[1,2,3,4,5,6,7,8,9,10].map(value => <button key={value} type="button" aria-pressed={rating === value} onClick={() => setRating(value)}>{value}</button>)}
-    </div><p className="check-in__scale"><span>Very poor</span><span>Very good</span></p><p>Your own rating is saved to Health for today. Energy and notes do not generate a diagnosis.</p></fieldset>}
+    </div><p className="check-in__scale"><span>Very poor</span><span>Very good</span></p><p>Your own rating is saved to Health for today. Energy and notes do not generate a diagnosis.</p></fieldset>}</div>
     <div className="daily-plan__buttons">
       {step > 0 && <button type="button" onClick={() => setStep(step - 1)}>Back</button>}
       {step < 2 ? <button type="button" className="daily-plan__primary" disabled={step === 0 && energy === null} onClick={() => setStep(step + 1)}>Continue</button> : <button type="submit" className="daily-plan__primary" disabled={rating === null}>Save today's check-in</button>}

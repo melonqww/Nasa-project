@@ -13,10 +13,13 @@ The two human participants directed the concept, divided responsibilities, suppl
 - The application does not call Codex or another LLM at runtime.
 - Help uses locally stored, prepared branching text; it does not generate new treatment instructions from a prompt.
 - Fixture histories and live sample variations are synthetic software-generated data, not NASA patient data or a trained physiological prediction model.
-- User-entered demo ratings/notes are stored locally, not sent to an AI provider by the app.
+- Confirmed notes are stored locally. Optional browser speech recognition may send audio to the browser provider and may require internet; a notice appears before dictation. This app does not store audio.
 - The fluid sphere is rendered procedurally in WebGL with a CSS fallback.
+- Both workspaces use an AI-generated Earth-orbit background at `apps/web/public/images/earth-orbit-wide.jpg`, created with OpenAI image generation through Codex. It is an illustration, not mission imagery. The supplied raster spacecraft was cut out using the same tool and saved as `spacecraft-cutout.png`; SVG hit zones provide module interaction. Module readings and positions come from a local deterministic simulator; no spacecraft is connected.
 
 ## Submission materials
+
+The website visibly labels the background image as AI-generated in the lower-right corner in both workspaces.
 
 The project submission page and presentation should disclose the Codex assistance described above. A screen recording of the actual application should be identified accurately as a recording.
 

@@ -1,3 +1,5 @@
+import { ShipContext } from "../ship/ShipContext";
+import type { ShipController } from "../ship/useShipTelemetry";
 import { useEffect, useRef, useState } from "react";
 import { OverlayPanel, useOverlayController } from "../../components/overlays";
 import { Disclosure } from "../../components/Disclosure";
@@ -5,7 +7,8 @@ import { GUIDANCE_FLOW, GUIDANCE_SOURCES, GUIDANCE_VERSION } from "./guidanceFlo
 import "./assistance.css";
 
 interface Turn { node: string; answer?: string }
-export function AssistancePanel({ onOpenReport, initialNode = "start", onContinueTour }: { onOpenReport: () => void; initialNode?: "start" | "sensor"; onContinueTour?: () => void }) {
+export function AssistancePanel({ onOpenReport, initialNode = "start", onContinueTour, ship, onOpenVoice, onOpenModules }: { onOpenReport: () => void; initialNode?: "start" | "sensor"; onContinueTour?: () => void; ship: ShipController; onOpenVoice: () => void; onOpenModules: () => void }) {
+  const [view, setView] = useState<"guidance" | "context">("guidance");
   const [turns, setTurns] = useState<Turn[]>([{ node: initialNode }]);
   const { isOpen, closePanel } = useOverlayController();
   const open = isOpen("assistance");
@@ -19,6 +22,8 @@ export function AssistancePanel({ onOpenReport, initialNode = "start", onContinu
   }, [turns, open]);
   return <OverlayPanel id="assistance" title="Crew assistance">
     <div className="assistance">
+      <div className="context-tabs" role="group" aria-label="Assistance view"><button type="button" aria-pressed={view === "guidance"} onClick={()=>setView("guidance")}>Step-by-step help</button><button type="button" aria-pressed={view === "context"} onClick={()=>setView("context")}>Ship context</button></div>
+      {view === "context" ? <ShipContext ship={ship} onVoice={onOpenVoice} onModules={onOpenModules} onReport={()=>{closePanel();onOpenReport();}} /> : <>
       <p className="assistance__scope">Prepared guidance · onboard demo. No approved flight emergency checklist is loaded. This chat does not contact anyone.</p>
       <div className="assistance__conversation" aria-label="Assistance conversation">
         {turns.map((turn, index) => {
@@ -34,7 +39,7 @@ export function AssistancePanel({ onOpenReport, initialNode = "start", onContinu
           </div>;
         })}
       </div>
-      <div className="assistance__actions" aria-label="Quick replies">
+      <div className="assistance__actions" aria-label="Quick replies" key={turns.at(-1)!.node}>
         {current.choices?.map(choice => <button key={choice.label} type="button" onClick={() => setTurns(previous => [...previous, { node: choice.next, answer: choice.label }])}>{choice.label}</button>)}
       </div>
       <p className="sr-only" role="status">{current.body[0]} {current.question}</p>
@@ -45,6 +50,7 @@ export function AssistancePanel({ onOpenReport, initialNode = "start", onContinu
         {turns.length > 1 && <button type="button" onClick={() => setTurns([{ node: "start" }])}>Start again</button>}
         <button type="button" onClick={() => { closePanel(); onOpenReport(); }}>Open report settings</button>
       </div>
+      </>}
       <Disclosure title="Sources and scope" className="assistance__details">
         <p>Version {GUIDANCE_VERSION}. Public sources checked on 14 Nov 2026. These prepared branches have not been reviewed or approved by a flight medical team.</p>
         <p>General first-aid sources inform the questions. NASA sources provide mission context, not approval of this chat. Microgravity care requires trained crew and mission-specific procedures.</p>

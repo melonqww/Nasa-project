@@ -1,3 +1,5 @@
+import { IncidentTimeline, buildShipReport } from "../ship/IncidentTimeline";
+import type { ShipController } from "../ship/useShipTelemetry";
 import { useState } from "react";
 import type { HealthUpdate } from "@ahm/contracts";
 import { InterfaceIcon } from "../../components/InterfaceIcon";
@@ -5,19 +7,22 @@ import { SelectMenu } from "../../components/SelectMenu";
 import { Disclosure } from "../../components/Disclosure";
 import { EventJournal } from "../history/EventJournal";
 
-export function ReportPreview({ update, onExport }: { update: HealthUpdate; onExport: (recipient: "earth" | "crew") => void }) {
+export function ReportPreview({ update, onExport, ship }: { update: HealthUpdate; onExport: (recipient: "earth" | "crew") => void; ship: ShipController }) {
   const [recipient, setRecipient] = useState<"earth" | "crew">("earth");
   const [includeHistory, setIncludeHistory] = useState(false);
   const [includeEvents, setIncludeEvents] = useState(false);
   const [includePlan, setIncludePlan] = useState(false);
+  const [includeShip, setIncludeShip] = useState(true);
+  const [includeNotes, setIncludeNotes] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
   const exportReport = () => {
-    const report = { version: 1, createdAt: new Date().toISOString(), synthetic: true, intendedRecipient: recipient,
+    const report = { version: 2, createdAt: new Date().toISOString(), synthetic: true, intendedRecipient: recipient,
       delivery: "Local file only; not transmitted", snapshotAt: update.snapshot.generatedAt,
       overall: { state: update.snapshot.overall.state, dataCoverage: update.snapshot.overall.dataCoverage,
         reasons: update.snapshot.overall.reasons, evaluatedAt: update.snapshot.overall.updatedAt },
       readings: update.snapshot.metrics.map(({ trend, ...reading }) => includeHistory ? { ...reading, trend } : reading),
       ...(includeEvents ? { events: update.events } : {}),
+      ...(includeShip ? { shipIncident: buildShipReport(ship, includeNotes, includeEvents ? update.events : []) } : {}),
       ...(includePlan ? { dailyPlan: update.dailyPlan } : {}),
     };
     const url = URL.createObjectURL(new Blob([JSON.stringify(report, null, 2)], { type: "application/json" }));
@@ -37,6 +42,8 @@ export function ReportPreview({ update, onExport }: { update: HealthUpdate; onEx
         <label><input type="checkbox" checked={includeHistory} onChange={event => { setIncludeHistory(event.target.checked); setDownloaded(false); }} /> Include measurement history</label>
         <label><input type="checkbox" checked={includeEvents} onChange={event => { setIncludeEvents(event.target.checked); setDownloaded(false); }} /> Include event journal</label>
         <label><input type="checkbox" checked={includePlan} onChange={event => { setIncludePlan(event.target.checked); setDownloaded(false); }} /> Include daily plans and check-in notes</label>
+        <label><input type="checkbox" checked={includeShip} onChange={e=>{setIncludeShip(e.target.checked);setDownloaded(false);}} /> Include ship telemetry and incident timeline</label>
+        <label><input type="checkbox" checked={includeNotes} disabled={!includeShip} onChange={e=>{setIncludeNotes(e.target.checked);setDownloaded(false);}} /> Include private check-in transcripts and context</label>
         <button type="button" className="report-download" onClick={exportReport}>Download JSON report</button>
         {downloaded && <p role="status">Download prepared from the selected snapshot. Nothing was transmitted.</p>}
         <p className="report-disclosure">Simulation. Sending to crew or Earth will require a configured communication adapter; delivery and acknowledgement must be tracked separately.</p>
@@ -46,6 +53,7 @@ export function ReportPreview({ update, onExport }: { update: HealthUpdate; onEx
         <p>{includeHistory ? "History included." : "Current values only."} {includeEvents ? `${update.events.length} journal entries included.` : "Journal excluded."}</p>
       </section>
     </div>
+    <IncidentTimeline ship={ship} update={update} />
     <Disclosure title="Session event journal" className="report-journal"><EventJournal events={update.events} /></Disclosure>
   </section>;
 }

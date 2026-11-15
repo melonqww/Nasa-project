@@ -1,0 +1,61 @@
+/* Motion explains a user action. Continuous telemetry never moves the layout. */
+:root { --motion-quick:180ms; --motion-view:380ms; --motion-ease:cubic-bezier(.22,.61,.36,1); }
+.nav-island__item { transition:background-color 240ms,color 240ms; }
+.nav-island__item svg { transition:transform 240ms var(--motion-ease); }
+.nav-island__item[aria-current="page"] svg { transform:translateY(-1px); }
+.status-page { animation:content-arrive var(--motion-view) ease-out; }
+.workspace-page { animation:none; }
+.daily-plan,.report-page { animation:content-arrive var(--motion-view) ease-out; }
+.modules-workspace,.health-workspace { animation:none; }
+.modules-workspace__heading,.module-selector,.measurement-picker,.measurement-selector { animation:content-arrive var(--motion-view) ease-out; }
+.module-detail,.metric-details { animation:detail-arrive 340ms ease-out; }
+.app-shell[data-mode="personal"] .status-visual { animation:none; }
+.metric-tray__reading { animation:none; }
+.check-in { animation:none; }
+.module-selector button { transition:background-color 220ms,border-color 220ms,color 220ms; }
+.module-detail__badge,.module-state-dot,.daily-task__status { transition:background-color 240ms,color 240ms; }
+.check-in__question,.daily-plan__past,.daily-plan__empty,.assistance__turn { animation:content-arrive 320ms ease-out; }
+.assistance__actions { animation:none; }
+.daily-plan__mode button,.check-in__ratings button,.period-switch button { transition:background-color 220ms,border-color 220ms,color 220ms; }
+.overlay__dialog { animation:dialog-arrive 360ms var(--motion-ease); }
+.overlay__backdrop { animation:overlay-fade 300ms ease; }
+.overlay[data-open="false"] { pointer-events:none; }
+.overlay[data-open="false"] .overlay__dialog { animation:dialog-leave 280ms ease both; }
+.overlay[data-open="false"] .overlay__backdrop { animation:backdrop-leave 280ms ease both; }
+.select-menu__popup,.demo-tools__panel { transition:opacity 240ms ease,transform 320ms var(--motion-ease),visibility 320ms; }
+.animated-popover { transform:translateY(-4px); }
+.animated-popover[data-open="true"] { transform:translateY(0); }
+.disclosure__reveal { transition:grid-template-rows 380ms var(--motion-ease),opacity 300ms ease; }
+@keyframes content-arrive { from { opacity:.2; } to { opacity:1; } }
+@keyframes detail-arrive { from { opacity:.3; } to { opacity:1; } }
+@keyframes dialog-arrive { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
+@keyframes dialog-leave { to { opacity:0; transform:translateY(3px); } }
+@keyframes backdrop-leave { to { opacity:0; } }
+@media(prefers-reduced-motion:reduce) {
+  .status-page,.workspace-page,.modules-workspace,.daily-plan,.report-page,.health-workspace,.module-detail,.metric-details,.check-in__question,.daily-plan__past,.daily-plan__empty,.assistance__turn,.assistance__actions,.overlay__dialog,.overlay__backdrop { animation:none !important; }
+  .nav-island__item,.nav-island__item svg,.module-selector button,.disclosure__reveal,.select-menu__popup,.demo-tools__panel { transition:none; }
+}
+@media(hover:none) { .module-tile:hover { transform:none; } }
+
+/* Retain the departing object long enough for a stationary crossfade. */
+.workspace-stage { position:relative; width:100%; }
+.workspace-layer { width:100%; }
+.workspace-layer--personal { display:flex; flex-direction:column; align-items:center; }
+.workspace-layer[aria-hidden="true"] { position:absolute; inset:0 0 auto; pointer-events:none; }
+.workspace-layer--ship,.workspace-layer--personal { position:relative; z-index:auto; }
+.workspace-layer[aria-hidden="true"] { position:absolute; z-index:auto; }
+.workspace-layer .status-sphere { position:relative; z-index:4; }
+.workspace-layer .ship-illustration { z-index:4; }
+.workspace-layer[aria-hidden="true"] .status-sphere,.workspace-layer[aria-hidden="true"] .ship-illustration { z-index:3; }
+.workspace-layer .status-sphere,.workspace-layer .ship-illustration { opacity:1; transform:none; transition:opacity 650ms ease-in-out; }
+.workspace-layer--personal[aria-hidden="true"] .status-sphere,.workspace-layer--ship[aria-hidden="true"] .ship-illustration { opacity:0; transform:none; }
+.workspace-layer :is(.status-readout,.metric-overview,.status-guidance,.ship-readout,.module-overview,.orbital-backdrop) { transition:opacity 350ms ease; }
+.workspace-layer[aria-hidden="true"] :is(.status-readout,.metric-overview,.status-guidance,.ship-readout,.module-overview,.orbital-backdrop) { opacity:0; }
+.workspace-stage[data-transitioning="true"] :is(.status-sphere,.ship-illustration) { will-change:opacity; }
+@starting-style {
+ .workspace-layer[aria-hidden="false"] :is(.ship-readout,.module-overview,.orbital-backdrop) { opacity:0; }
+ .workspace-layer--personal[aria-hidden="false"] .status-sphere,.workspace-layer--ship[aria-hidden="false"] .ship-illustration { opacity:0; }
+}
+@media(prefers-reduced-motion:reduce) {
+ .workspace-layer .status-sphere,.workspace-layer .ship-illustration,.workspace-layer :is(.status-readout,.metric-overview,.status-guidance,.ship-readout,.module-overview,.orbital-backdrop) { transition:none; }
+}

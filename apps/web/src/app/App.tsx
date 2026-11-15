@@ -26,6 +26,10 @@ export function App() {
   return (
     <OverlayProvider>
       <OverviewScreen key={tourSource ? "walkthrough" : "main"} update={update} touring={tourSource !== null} onStartTour={() => { const next = new DemoHealthDataSource(null); next.populateHistory(7); setTourSource(next); }} onEndTour={() => setTourSource(null)} actions={{
+        runScenario: id => activeSource.runScenario(id),
+        pauseScenario: () => activeSource.pause(),
+        resumeScenario: () => activeSource.resume(),
+        resetScenario: () => activeSource.reset(),
         setDailyMode: mode => activeSource.setDailyMode(mode),
         saveActiveMinutes: minutes => activeSource.saveActiveMinutes(minutes),
         confirmDailyTask: task => activeSource.confirmDailyTask(task),

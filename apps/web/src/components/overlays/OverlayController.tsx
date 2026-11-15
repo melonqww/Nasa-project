@@ -7,7 +7,7 @@ import {
   type ReactNode,
 } from "react";
 
-export type PanelId = "health" | "assistance";
+export type PanelId = "health" | "assistance" | "voice";
 
 interface OverlayContextValue {
   activePanel: PanelId | null;

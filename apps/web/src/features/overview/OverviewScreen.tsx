@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { HealthUpdate, MetricId, OverallState } from "@ahm/contracts";
+import { Disclosure } from "../../components/Disclosure";
 import { EarthClock } from "../../components/EarthClock";
 import { InterfaceIcon, type IconName } from "../../components/InterfaceIcon";
 import { StatusBall } from "../../components/StatusBall";
@@ -12,7 +13,18 @@ import { SelectMenu } from "../../components/SelectMenu";
 import { AssistancePanel } from "../assistance/AssistancePanel";
 import { measurementContext, statusReason } from "../../lib/measurementContext";
 import { GuidedWalkthrough } from "../demo-control/GuidedWalkthrough";
+import { ShipOverview } from "../ship/ShipOverview";
+import { ModulesScreen } from "../ship/ModulesScreen";
+import { OrbitalBackdrop } from "../ship/OrbitalBackdrop";
+import { type ModuleId } from "../ship/shipData";
+import { useShipTelemetry } from '../ship/useShipTelemetry';
+import { ChangeNotice } from "../ship/ChangeNotice";
+import { VoicePanel } from '../ship/VoicePanel';
+import { ShipDemoControls } from '../ship/ShipDemoControls';
+
 import "./overview-screen.css";
+import "../ship/ship.css";
+import '../ship/telemetry.css';
 
 type Section = "status" | "health" | "plan" | "connection";
 const SECTIONS: { id: Section; label: string; icon: IconName }[] = [
@@ -54,6 +66,14 @@ function metricValue(id: MetricId, value: number | null, unit: string) {
 export function OverviewScreen({ update, actions, touring, onStartTour, onEndTour }: { update: HealthUpdate; actions: DemoActions; touring: boolean; onStartTour: () => void; onEndTour: () => void }) {
   const { overall, metrics, recommendations, generatedAt } = update.snapshot;
   const [section, setSection] = useState<Section>("status");
+  const [mode, setMode] = useState<"personal" | "ship">("personal");
+  const [departingMode, setDepartingMode] = useState<"personal" | "ship" | null>(null);
+  useEffect(() => {
+    if (!departingMode) return;
+    const timer = window.setTimeout(() => setDepartingMode(null), 700);
+    return () => window.clearTimeout(timer);
+  }, [departingMode, mode]);
+  const [selectedModule, setSelectedModule] = useState<ModuleId>("command");
   const [selectedMetric, setSelectedMetric] = useState<MetricId>("heartRate");
   const [tourStep, setTourStep] = useState(0);
   const [helpEntry, setHelpEntry] = useState<{node:"start"|"sensor"; id:number}>({node:"start",id:0});
@@ -64,7 +84,16 @@ export function OverviewScreen({ update, actions, touring, onStartTour, onEndTou
     ? { title: "No measurements loaded", body: "Use Demo tools to add synthetic sample history." }
     : STATUS[overall.state];
 
-  const showMetric = (id: MetricId) => { setSelectedMetric(id); setSection("health"); };
+  const ship = useShipTelemetry(touring);
+  const modules = ship.frame.modules;
+  const showMetric = (id: MetricId) => { setMode("personal"); setSelectedMetric(id); setSection("health"); };
+  const showModule = (id: ModuleId) => { setSelectedModule(id); setSection("health"); };
+  const switchMode = (next: "personal" | "ship") => {
+    if (next === mode) return;
+    closePanel();
+    setDepartingMode(window.matchMedia("(prefers-reduced-motion: reduce)").matches ? null : mode);
+    setMode(next);
+  };
   const checkIn = () => { setStartCheckIn(true); setSection("plan"); };
   const sensorCheck = () => { setHelpEntry(entry => ({node:"sensor",id:entry.id+1})); openPanel("assistance"); };
   const changeTourStep = (step: number) => {
@@ -77,25 +106,44 @@ export function OverviewScreen({ update, actions, touring, onStartTour, onEndTou
   };
 
 
-  return <div className="app-shell" data-state={overall.state} data-touring={touring}>
+  return <div className="app-shell" data-mode={mode} data-state={overall.state} data-touring={touring}>
+    <OrbitalBackdrop active />
     <a className="skip-link" href="#main">Skip to main content</a>
     <header className="overview-header">
       <span className="demo-brand">Synthetic demonstration data</span>
-      <DemoTools control={update.control} actions={actions} onStartTour={onStartTour} touring={touring} />
+      <DemoTools control={update.control} actions={{...actions, clear: () => { actions.clear(); ship.clear(); }}} onStartTour={onStartTour} touring={touring} workspaceMode={mode} shipControls={<ShipDemoControls ship={ship} />} />
       <EarthClock />
-      <nav className="nav-island" aria-label="Main navigation">
-        {SECTIONS.map(item => <button key={item.id} type="button" className="nav-island__item"
-          aria-current={section === item.id ? "page" : undefined}
-          onClick={() => setSection(item.id)}>
-          <InterfaceIcon name={item.icon} />
-          <span>{item.label}</span>
+      <div className="nav-island">
+      <svg className="nav-island__contour" viewBox="0 0 690 88" preserveAspectRatio="none" aria-hidden="true"><path d="M26 12H219C237 12 232 62 258 62H432C458 62 453 12 471 12H664Q689 12 689 37V61Q689 87 663 87H27Q1 87 1 61V38Q1 12 26 12Z" /></svg>
+      <nav className="nav-island__half" aria-label="Overview navigation">
+        {SECTIONS.slice(0,2).map(item => <button key={item.id} type="button" className="nav-island__item" aria-current={section === item.id ? "page" : undefined} onClick={() => setSection(item.id)}>
+          <InterfaceIcon name={item.id === "health" && mode === "ship" ? "modules" : item.icon} /><span>{item.id === "health" && mode === "ship" ? "Modules" : item.label}</span>
         </button>)}
       </nav>
-      <button type="button" className="assistance-trigger" aria-label="Open crew assistance" title="Crew assistance" aria-haspopup="dialog" aria-expanded={isOpen("assistance")} onClick={() => openPanel("assistance")}><InterfaceIcon name="help" /><span>Help</span></button>
+      <div className="mode-bubble" role="group" aria-label="Workspace mode">
+        <span className="mode-bubble__selection" data-mode={mode} aria-hidden="true" />
+        <button type="button" aria-pressed={mode === "personal"} disabled={touring} onClick={() => switchMode("personal")}><InterfaceIcon name="person" /><span>Personal</span></button>
+        <button type="button" aria-pressed={mode === "ship"} disabled={touring} onClick={() => switchMode("ship")}><InterfaceIcon name="ship" /><span>Ship</span></button>
+      </div>
+      <nav className="nav-island__half" aria-label="Plan and connection navigation">
+        {SECTIONS.slice(2).map(item => <button key={item.id} type="button" className="nav-island__item"
+          aria-current={section === item.id ? "page" : undefined}
+          onClick={() => setSection(item.id)}>
+          <InterfaceIcon name={item.id === "health" && mode === "ship" ? "modules" : item.icon} />
+          <span>{item.id === "health" && mode === "ship" ? "Modules" : item.label}</span>
+        </button>)}
+      </nav>
+      </div>
+      <div className="crew-tools"><button type="button" className="assistance-trigger" aria-label="Open crew assistance" title="Crew assistance" aria-haspopup="dialog" aria-expanded={isOpen("assistance")} onClick={() => openPanel("assistance")}><InterfaceIcon name="help" /><span>Help</span></button><button type="button" className="assistance-trigger voice-trigger" aria-label="Open personal check-ins" aria-haspopup="dialog" aria-expanded={isOpen("voice")} onClick={() => openPanel("voice")}><InterfaceIcon name="mic" /><span>Voice</span></button></div>
     </header>
 
+    <nav className="mobile-dock" aria-label="Mobile navigation">
+      {SECTIONS.map(item=><button key={item.id} type="button" aria-current={section===item.id?"page":undefined} onClick={()=>setSection(item.id)}><InterfaceIcon name={item.id==="health"&&mode==="ship"?"modules":item.icon}/><span>{item.id==="health"&&mode==="ship"?"Modules":item.label}</span></button>)}
+    </nav>
     <main id="main" key={section} className={section === "status" ? "status-page" : "workspace-page"}>
-      {section === "status" ? <>
+      {section === "status" ? <div className="workspace-stage" data-mode={mode} data-transitioning={departingMode !== null}>
+        {(mode === "ship" || departingMode === "ship") && <div className="workspace-layer workspace-layer--ship" aria-hidden={mode !== "ship"} inert={mode !== "ship"}><ShipOverview modules={modules} locationQuality={ship.frame.locationQuality} onSelect={showModule} /></div>}
+        {(mode === "personal" || departingMode === "personal") && <div className="workspace-layer workspace-layer--personal" aria-hidden={mode !== "personal"} inert={mode !== "personal"}>
         <section className="status-composition" aria-labelledby="status-heading">
           <div className="status-visual">
             <StatusBall state={overall.state} expanded={isOpen("health")} onOpen={() => openPanel("health")} />
@@ -118,7 +166,7 @@ export function OverviewScreen({ update, actions, touring, onStartTour, onEndTou
               if (!reading) return null;
               const pending = reading.value === null;
               const quickAction = pending && (meta.id === "wellbeing" || meta.id === "spo2");
-              return <button type="button" key={meta.id} className="metric-tray__item" title={quickAction ? (meta.id === "wellbeing" ? "Open today's check-in" : "Open prepared sensor check") : `Open ${meta.label.toLowerCase()} details and history`} onClick={() => quickAction ? (meta.id === "wellbeing" ? checkIn() : sensorCheck()) : showMetric(meta.id)}>
+              return <button type="button" key={meta.id} className="metric-tray__item" data-status={reading.status} title={quickAction ? (meta.id === "wellbeing" ? "Open today's check-in" : "Open prepared sensor check") : `Open ${meta.label.toLowerCase()} details and history`} onClick={() => quickAction ? (meta.id === "wellbeing" ? checkIn() : sensorCheck()) : showMetric(meta.id)}>
                 <span className="metric-tray__label"><InterfaceIcon name={meta.icon} />{meta.label}</span>
                 <span key={reading.value} className="metric-tray__reading">{metricValue(meta.id, reading.value, reading.unit)}</span>
                 <span className="metric-tray__context">{measurementContext(reading)}</span>
@@ -128,7 +176,7 @@ export function OverviewScreen({ update, actions, touring, onStartTour, onEndTou
           </div>
           <p className="measurement-time">Last snapshot: <time dateTime={generatedAt}>{utcTime(generatedAt)} UTC</time><span>Live simulation · 5 s</span></p>
         </section>
-      </> : section === "plan" ? <DailyPlanScreen update={update} actions={actions} startCheckIn={startCheckIn} temporary={touring} openHealth={() => setSection("health")} /> : section === "connection" ? <ReportPreview update={update} onExport={actions.recordExport} /> : <section className="health-workspace">
+      </div>}</div> : section === "plan" ? <DailyPlanScreen update={update} actions={actions} startCheckIn={startCheckIn} temporary={touring} openHealth={() => showMetric(selectedMetric)} /> : section === "connection" ? <ReportPreview update={update} onExport={actions.recordExport} ship={ship} /> : mode === "ship" ? <ModulesScreen modules={modules} selectedId={selectedModule} onSelect={setSelectedModule} generatedAt={ship.frame.sourceAt ?? ship.frame.at} ship={ship} /> : <section className="health-workspace">
         <div className="measurement-picker"><h1>Health</h1><SelectMenu label="Measurement" value={selectedMetric} options={HEALTH_METRICS.map(meta => {
           const reading = metrics.find(item => item.metric === meta.id);
           return { value: meta.id, label: meta.label, description: reading?.value === null || !reading ? "No current reading" : `${reading.value} ${reading.unit}` };
@@ -137,7 +185,7 @@ export function OverviewScreen({ update, actions, touring, onStartTour, onEndTou
           <h1>Health</h1>
           {HEALTH_METRICS.map(meta => {
             const reading = metrics.find(item => item.metric === meta.id);
-            return <button type="button" key={meta.id} aria-pressed={selectedMetric === meta.id} onClick={() => setSelectedMetric(meta.id)}>
+            return <button type="button" key={meta.id} data-status={reading?.status} aria-pressed={selectedMetric === meta.id} onClick={() => setSelectedMetric(meta.id)}>
               <InterfaceIcon name={meta.icon} /><span>{meta.label}<small>{reading?.value ?? "No data"} {reading?.unit}</small></span>
             </button>;
           })}
@@ -147,17 +195,18 @@ export function OverviewScreen({ update, actions, touring, onStartTour, onEndTou
         </div>
       </section>}
     </main>
-
+    <p className="site-art-credit">AI-generated background image</p>
     {touring && <GuidedWalkthrough step={tourStep} onStep={changeTourStep} onEnd={() => { closePanel(); onEndTour(); }} />}
-    <AssistancePanel key={helpEntry.id} initialNode={helpEntry.node} onContinueTour={touring && tourStep === 3 ? () => changeTourStep(4) : undefined} onOpenReport={() => setSection("connection")} />
+    <ChangeNotice ship={ship} update={update} onModule={id=>{setMode("ship");showModule(id);}} onMetric={showMetric} />
+    <VoicePanel ship={ship} readings={metrics} onHelp={() => openPanel("assistance")} />
+    <AssistancePanel ship={ship} onOpenVoice={() => openPanel("voice")} onOpenModules={() => {closePanel();setMode("ship");setSection("health");}} key={helpEntry.id} initialNode={helpEntry.node} onContinueTour={touring && tourStep === 3 ? () => changeTourStep(4) : undefined} onOpenReport={() => setSection("connection")} />
     <OverlayPanel id="health" title="Health summary">
-      <div className="summary-content">
-        <h3>{status.title}</h3><ul>{overall.reasons.map(reason => <li key={reason}>{reason}</li>)}</ul>
-        <p>Based on available simulated measurements. This is not a medical diagnosis.</p>
-        {METRICS.map(meta => <button className="summary-metric" type="button" key={meta.id} onClick={() => { setSelectedMetric(meta.id); setSection("health"); closePanel(); }}>
-          <InterfaceIcon name={meta.icon} />{meta.label}
-        </button>)}
-      </div>
-    </OverlayPanel>
+      <div className="summary-content summary-clean">
+        <p className="context-eyebrow">Current simulated snapshot · {utcTime(generatedAt)} UTC</p>
+        <h3>{status.title}</h3>
+        <p className="summary-coverage">Data coverage: {overall.dataCoverage}. This summary is not a diagnosis.</p>
+        <div className="summary-grid">{METRICS.map(meta=>{const r=metrics.find(m=>m.metric===meta.id);return <button className="summary-metric" type="button" key={meta.id} onClick={()=>{showMetric(meta.id);closePanel();}}><InterfaceIcon name={meta.icon}/><span>{meta.label}<strong>{r?.value??"No data"} {r?.value===null?"":r?.unit}</strong></span><InterfaceIcon name="chevron"/></button>;})}</div>
+        <Disclosure title="What this status is based on"><ul>{overall.reasons.map(reason=><li key={reason}>{reason}</li>)}</ul><p>Only available simulated measurements are assessed. A reassuring value does not rule out a medical problem.</p></Disclosure>
+      </div>    </OverlayPanel>
   </div>;
 }

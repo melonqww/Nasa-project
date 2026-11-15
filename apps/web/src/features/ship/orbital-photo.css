@@ -1,0 +1,25 @@
+/* Full-screen photography: most of the frame is space, Earth stays low. */
+.ship-orbit-backdrop { position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; background:#0b1726; opacity:1; transition:opacity 650ms ease-in-out; }
+.ship-orbit-backdrop__image { position:absolute; inset:0; background:url('/images/earth-orbit-wide.jpg') center / cover no-repeat; }
+.ship-orbit-backdrop::after { content:""; position:absolute; inset:0; background:linear-gradient(180deg,#0a17232b,transparent 42%,#10283e5e); }
+.ship-orbit-backdrop[data-active="false"] { opacity:0; }
+@starting-style { .ship-orbit-backdrop[data-active="true"] { opacity:0; } }
+.app-shell :is(.demo-brand,.earth-clock__label,.earth-clock__date,.earth-clock__time) { color:#e2edf5; text-shadow:0 1px 6px #0005; }
+.app-shell .earth-clock__label span { border-color:#9eafc366; }
+.app-shell .ship-readout { color:#f3f8fc; text-shadow:0 1px 12px #081727a6; }
+.app-shell .ship-readout>p:not(.ship-readout__eyebrow),.app-shell .ship-text-button { color:#e1edf6; }
+.app-shell .module-overview__heading h2,.app-shell .ship-source-note,.app-shell .orbital-art-credit { color:#e1edf5; text-shadow:0 1px 5px #11263c99; }
+.app-shell .module-tile { background:#fcfdfdf5; }
+.app-shell .module-selector,.app-shell .module-detail { background:#fcfdfdf7; }
+.app-shell .modules-workspace__heading { color:#edf5fb; text-shadow:0 1px 7px #12283c80; }
+.app-shell .modules-workspace__heading p,.app-shell .module-connection-count,.app-shell .ship-workspace-note { color:#d4e3ef; }
+.app-shell :is(.daily-plan__heading h1,.daily-plan__date h2,.report-page__heading h1) { color:#f3f8fc; text-shadow:0 1px 8px #10273b88; }
+.app-shell :is(.daily-plan__heading p,.daily-plan__date>span,.daily-plan .daily-plan__disclosure,.report-page__heading p,.report-journal>.disclosure__trigger) { color:#d7e5ef; }
+.app-shell .report-page__heading>svg { color:#d8e8f2; }
+@media(prefers-reduced-motion:reduce) { .ship-orbit-backdrop { transition:none; } }
+/* The same orbital photograph is used in both workspaces. */
+.app-shell .status-readout { color:#f3f8fc; text-shadow:0 2px 10px #06142180; }
+.app-shell .status-readout__description,.app-shell .summary-link,.app-shell .measurement-time,.app-shell .measurement-time>span { color:#e0edf6; }
+.app-shell .status-guidance { color:#f0f6fb; text-shadow:0 1px 7px #0009; }
+.app-shell .status-guidance h2 { color:#cddfea; }
+.app-shell .measurement-picker>h1 {color:#f3f8fc;}

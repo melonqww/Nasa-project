@@ -26,6 +26,10 @@ Our goal is to make that information easier to understand at a glance and easier
 
 **Prepare a health summary.** Connection lets the user review measurements and choose what to include in a downloadable report, including optional history and check-in notes.
 
+**Connect the person to their surroundings.** Ship mode combines a selectable spacecraft with automatically simulated environmental samples and crew movements. Feed freshness and crew-position availability are tracked separately. Personal check-ins preserve their available module context and measurements at confirmation time. Help shows possible temporal associations, supporting evidence and missing information without assigning a diagnosis.
+
+**Capture a quick check-in.** Voice opens a compact dictation or text form and a separate history view. Browser language is selected automatically. A transcript is saved only after confirmation; audio is not stored by this app. Browser dictation may require internet and send audio to the browser provider. Connection includes an incident timeline, while private transcripts and context enter a report only with explicit opt-in.
+
 ## What makes the approach useful
 
 The overview, explanations, help and daily routine form one connected journey. A missing oxygen reading can lead directly to a prepared sensor check. An unfinished wellbeing entry leads to today's questions. The sphere provides a memorable visual anchor, while detailed information stays available without crowding the main screen.
@@ -49,6 +53,7 @@ Daily records stay in the current browser. Real sensors, validated medical evalu
 On the website, choose **Demo tools → Start guided walkthrough** to explore the complete example: overview, history, signal loss, a prepared sensor check, simulated recovery and a wellbeing check-in.
 
 - [Demonstration guide](docs/DEMO_GUIDE.md)
+- [Voice check-ins: concept, current scope and roadmap](docs/VOICE_CHECKINS.md)
 - [Scientific sources](docs/SOURCES.md)
 - [AI use and human contributions](docs/AI_USAGE.md)
 

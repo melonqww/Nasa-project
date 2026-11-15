@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 
 import { useOverlayController, type PanelId } from "./OverlayController";
 
@@ -24,11 +24,19 @@ interface OverlayPanelProps {
 export function OverlayPanel({ id, title, children }: OverlayPanelProps) {
   const { isOpen, closePanel } = useOverlayController();
   const open = isOpen(id);
+  const [present, setPresent] = useState(open);
   const headingId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!open) {
+    if (open) { setPresent(true); return; }
+    const delay = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 300;
+    const timeout = window.setTimeout(() => setPresent(false), delay);
+    return () => window.clearTimeout(timeout);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open || !present) {
       return;
     }
 
@@ -85,14 +93,14 @@ export function OverlayPanel({ id, title, children }: OverlayPanelProps) {
       document.body.style.overflow = previousOverflow;
       trigger?.focus();
     };
-  }, [open, closePanel]);
+  }, [open, present, closePanel]);
 
-  if (!open) {
+  if (!present) {
     return null;
   }
 
   return (
-    <div className="overlay" data-panel={id}>
+    <div className="overlay" data-panel={id} data-open={open} aria-hidden={!open} inert={!open}>
       <div className="overlay__backdrop" onClick={closePanel} aria-hidden="true" />
 
       <div

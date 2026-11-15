@@ -18,4 +18,4 @@ See [SOURCES.md](SOURCES.md) for direct NASA, AHA, American Red Cross and FDA re
 
 ## Visuals and AI assistance
 
-The runtime interface uses inline SVG icons, CSS and a procedural WebGL sphere. See [AI_USAGE.md](AI_USAGE.md) for Codex assistance with code and design. No external photo or model dataset is required to run the current interface.
+The runtime interface uses inline SVG icons, a procedural WebGL sphere, and the team-supplied spacecraft image with an AI-assisted transparent cutout and SVG interaction zones (`apps/web/public/images/spacecraft-cutout.png`). Both workspaces include an AI-generated Earth-orbit background at `apps/web/public/images/earth-orbit-wide.jpg`; neither image is represented as NASA mission imagery. See [AI_USAGE.md](AI_USAGE.md).

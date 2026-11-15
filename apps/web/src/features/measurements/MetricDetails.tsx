@@ -30,7 +30,7 @@ export function MetricDetails({ reading, recommendations, fallbackAt, onCheckIn,
   const contextUrl = ["heartRate", "temperature", "respiratoryRate", "systolicPressure", "diastolicPressure"].includes(reading.metric)
     ? "https://www.nasa.gov/wp-content/uploads/2023/04/ochmo-std-100.1a.pdf#page=38"
     : "https://www.nasa.gov/hrp/risks/";
-  return <article className="metric-details">
+  return <article className="metric-details" data-status={reading.status}>
     <header className="metric-details__hero">
       <div><h2 className="metric-details__label">{reading.label}</h2>
         <p className="metric-details__value"><span className="metric-details__number">{reading.value === null ? "—" : formatValue(reading.value)}</span>
